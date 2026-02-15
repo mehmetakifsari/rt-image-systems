@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-}
+    ports:
+      - "80:80"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - DB_NAME=${DB_NAME:-renault_garanti}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - GOOGLE_VISION_API_KEY=${GOOGLE_VISION_API_KEY:-}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-eu-central-1}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
+    volumes:
+      - uploads_data:/app/backend/uploads
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:7
+    environment:
+      - MONGO_INITDB_DATABASE=${DB_NAME:-renault_garanti}
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+  uploads_data:
+
+networks:
+  app-network:
+    driver: bridge
