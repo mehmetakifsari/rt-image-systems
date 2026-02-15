@@ -1,0 +1,60 @@
+# Git
+.git
+.gitignore
+.gitconfig
+
+# Node modules (will be installed during build)
+frontend/node_modules
+node_modules
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (use Coolify env vars instead)
+.env
+.env.local
+.env.development
+.env.production
+backend/.env
+
+# Build artifacts
+frontend/build
+*.log
+
+# Test files
+test_reports/
+tests/
+*.test.js
+*.spec.js
+backend_test.py
+backend_test_results.json
+
+# Documentation
+*.md
+!README.md
+
+# Emergent platform files
+.emergent
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Upload data (use volumes instead)
+uploads/
+backend/uploads/
