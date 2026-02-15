@@ -1,0 +1,113 @@
+{
+  "identity": {
+    "name": "Renault Trucks Ops - The Field Commander",
+    "persona": "A robust, industrial-grade tool designed for the grease and grit of the workshop. It prioritizes speed, legibility in harsh sunlight, and one-thumb operation. It is not delicate; it is tough.",
+    "emotional_tone": "Industrial, Reliable, Urgent, High-Precision",
+    "design_archetype": "The Performance Pro (Dark Mode Edition)"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Barlow Condensed, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight uppercase",
+      "h2": "text-2xl font-bold tracking-tight uppercase",
+      "h3": "text-xl font-semibold tracking-wide",
+      "body": "text-base leading-relaxed",
+      "caption": "text-xs font-medium tracking-wider text-muted-foreground uppercase"
+    },
+    "installation": "import '@fontsource/barlow-condensed/700.css'; import '@fontsource/inter/400.css'; import '@fontsource/inter/500.css'; import '@fontsource/inter/600.css';"
+  },
+  "colors": {
+    "palette": {
+      "background": "#09090b",
+      "surface": "#18181b",
+      "surface_highlight": "#27272a",
+      "primary": "#FACC15",
+      "primary_foreground": "#000000",
+      "secondary": "#71010D",
+      "secondary_foreground": "#FFFFFF",
+      "success": "#16A34A",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "muted": "#52525B",
+      "border": "#27272a"
+    },
+    "usage_rules": {
+      "primary": "Use Yellow (#FACC15) for primary actions (FAB, Submit, Active States). It simulates the 'High-Vis' safety gear.",
+      "secondary": "Use Renault Red (#71010D) ONLY for 'Damaged' tags, destructive actions, or critical alerts.",
+      "background": "ALWAYS dark mode. Never use pure black (#000000); use Zinc-950 (#09090b) for depth.",
+      "text": "Headings in White (#FAFAFA). Secondary text in Zinc-400 (#A1A1AA)."
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid #27272a (Zinc-800). No soft shadows, use hard edges or subtle 1px glows.",
+    "radius": "Rounded-lg (0.5rem) for cards. Rounded-full for buttons/status pills.",
+    "shadows": "none",
+    "glassmorphism": "Use sparingly. Only on the Bottom Navigation or Sticky Headers: bg-zinc-950/80 backdrop-blur-md border-b border-white/5."
+  },
+  "layout_strategy": {
+    "mobile_first": true,
+    "grid_system": {
+      "dashboard": "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
+      "form": "flex flex-col gap-6"
+    },
+    "spacing": "Generous touch targets. Min height 48px for all interactive elements.",
+    "containers": "p-4 md:p-6 lg:p-8"
+  },
+  "components": {
+    "buttons": {
+      "default": "bg-primary text-primary-foreground hover:bg-yellow-500 font-bold uppercase tracking-wider rounded-md h-12 px-6 transition-transform active:scale-95",
+      "secondary": "bg-zinc-800 text-white hover:bg-zinc-700 font-medium",
+      "ghost": "hover:bg-zinc-800/50 text-zinc-300"
+    },
+    "cards": {
+      "style": "bg-surface border border-border rounded-xl p-4 relative overflow-hidden",
+      "hover": "hover:border-primary/50 transition-colors duration-200"
+    },
+    "chat_bubbles": {
+      "user": "bg-primary text-black rounded-2xl rounded-tr-sm p-3 max-w-[85%] self-end shadow-sm",
+      "system": "bg-zinc-800 text-zinc-100 rounded-2xl rounded-tl-sm p-3 max-w-[85%] self-start border border-zinc-700",
+      "media": "p-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden"
+    },
+    "inputs": {
+      "style": "bg-zinc-900 border-zinc-700 focus:border-primary focus:ring-1 focus:ring-primary text-white h-12 rounded-md"
+    },
+    "status_badges": {
+      "standard": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      "road_assist": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+      "damaged": "bg-red-900/20 text-red-400 border-red-500/30",
+      "pdi": "bg-green-500/10 text-green-400 border-green-500/20"
+    }
+  },
+  "motion": {
+    "micro_interactions": "Active scale down (95%) on buttons. Slide-in from bottom for Modals.",
+    "transitions": "transition-all duration-200 ease-out",
+    "page_load": "fade-in duration-300"
+  },
+  "assets": {
+    "icons": "Lucide React (standard). Use 'Camera', 'Mic', 'Truck', 'FileText', 'AlertTriangle'.",
+    "logo_placeholder": "Use text 'RT OPS' in Barlow Condensed Bold if logo missing."
+  },
+  "universal_guidelines": [
+    "Dark Mode Default: The app is used in garages and trucks. Bright white screens are forbidden.",
+    "Touch Targets: Field techs have gloves or dirty hands. Buttons must be full-width on mobile.",
+    "Contrast: Text must be legible in direct sunlight. Use High Contrast colors.",
+    "No Gradients: Flat, matte surfaces. No gloss.",
+    "Offline Indicator: ALways show a 'Syncing...' or 'Offline' pill in the header if disconnected."
+  ],
+  "instructions_to_main_agent": [
+    "1. Setup Tailwind for Dark Mode force (class strategy, default 'dark').",
+    "2. Install 'Barlow Condensed' font immediately.",
+    "3. Build the 'Chat Interface' as the core interaction model for adding photos/notes.",
+    "4. Admin Panel should be dense (Data Grid), Mobile App should be spacious (Cards).",
+    "5. Use 'sonner' for toast notifications (e.g., 'Upload Complete')."
+  ],
+  "image_urls": {
+    "hero_background": "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=2070&auto=format&fit=crop",
+    "truck_avatar_placeholder": "https://images.unsplash.com/photo-1501700493788-782904de071e?q=80&w=1972&auto=format&fit=crop",
+    "mechanic_avatar": "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?q=80&w=2070&auto=format&fit=crop"
+  }
+}
