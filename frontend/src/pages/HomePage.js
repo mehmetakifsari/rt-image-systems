@@ -107,16 +107,75 @@ const HomePage = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-xl font-bold text-white">RT KAYIT</h1>
-              <p className="text-xs text-zinc-500">Garanti Kayıt Sistemi</p>
+              <p className="text-xs text-zinc-500">
+                {user?.branch_name ? `${user.branch_name} - ${user.job_title_display}` : 'Garanti Kayıt Sistemi'}
+              </p>
             </div>
             
-            {/* Online/Offline status */}
-            <div className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${
-              isOnline ? 'online-indicator' : 'offline-indicator'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
-              {isOnline ? t('status.online') : t('status.offline')}
-              {isSyncing && <Loader2 className="w-3 h-3 animate-spin" />}
+            <div className="flex items-center gap-2">
+              {/* Online/Offline status */}
+              <div className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${
+                isOnline ? 'online-indicator' : 'offline-indicator'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+                {isOnline ? t('status.online') : t('status.offline')}
+                {isSyncing && <Loader2 className="w-3 h-3 animate-spin" />}
+              </div>
+
+              {/* User menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="w-10 h-10 bg-[#18181b] border border-[#27272a] rounded-xl flex items-center justify-center hover:bg-[#27272a] transition-colors"
+                  data-testid="user-menu-button"
+                >
+                  <User className="w-5 h-5 text-zinc-400" />
+                </button>
+
+                {showUserMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowUserMenu(false)}
+                    />
+                    <div className="absolute right-0 top-12 w-56 bg-[#18181b] border border-[#27272a] rounded-xl shadow-xl z-50 overflow-hidden">
+                      {/* User info */}
+                      <div className="p-3 border-b border-[#27272a]">
+                        <p className="text-white font-medium truncate">{user?.full_name}</p>
+                        <p className="text-zinc-500 text-xs truncate">{user?.username}</p>
+                        {user?.branch_name && (
+                          <p className="text-zinc-500 text-xs flex items-center gap-1 mt-1">
+                            <Building2 className="w-3 h-3" />
+                            {user.branch_name}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Menu items */}
+                      <div className="p-1">
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => { setShowUserMenu(false); navigate('/admin'); }}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-zinc-300 hover:bg-[#27272a] rounded-lg transition-colors"
+                            data-testid="admin-menu-item"
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span className="text-sm">{t('nav.admin')}</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                          data-testid="logout-menu-item"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span className="text-sm">{t('nav.logout')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
