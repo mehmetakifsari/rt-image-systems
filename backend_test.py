@@ -8,7 +8,7 @@ from datetime import datetime
 import io
 
 class RenaultTrucksAPITester:
-    def __init__(self, base_url="https://bana-proje.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://truck-service-vault.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.admin_token = None
