@@ -213,6 +213,7 @@ class NotificationResponse(BaseModel):
 class SettingsUpdate(BaseModel):
     vision_api_key: Optional[str] = None
     ocr_provider: Optional[str] = "browser"
+    voice_provider: Optional[str] = "browser"
     storage_type: Optional[str] = "local"
     ftp_host: Optional[str] = None
     ftp_user: Optional[str] = None
@@ -232,6 +233,7 @@ class SettingsResponse(BaseModel):
     id: str
     vision_api_key: Optional[str] = None
     ocr_provider: str = "browser"
+    voice_provider: str = "browser"
     storage_type: str = "local"
     ftp_host: Optional[str] = None
     ftp_user: Optional[str] = None
