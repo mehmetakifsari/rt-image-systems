@@ -659,21 +659,210 @@ const AdminPage = () => {
                 </div>
               )}
 
+              {/* Pending Records */}
+              {activeTab === 'pending' && (
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl border ${
+                    theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-yellow-50 border-yellow-200'
+                  }`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'}`}>
+                      <Clock className="w-4 h-4 inline mr-2" />
+                      Stajyerlerin oluşturduğu ve onay bekleyen kayıtlar burada listelenir.
+                    </p>
+                  </div>
+
+                  {pendingRecords.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Check className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-500'}`} />
+                      <p className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}>
+                        Bekleyen kayıt bulunmuyor
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {pendingRecords.map((record) => {
+                        const Icon = RECORD_TYPE_ICONS[record.record_type];
+                        const colorClass = RECORD_TYPE_COLORS[record.record_type];
+                        return (
+                          <div key={record.id} className={`p-4 rounded-xl border ${
+                            theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                          }`}>
+                            <div className="flex items-start gap-4">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                                <Icon className="w-6 h-6" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase ${colorClass}`}>
+                                    {t(`record.${record.record_type}`)}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/10 text-yellow-400">
+                                    Onay Bekliyor
+                                  </span>
+                                </div>
+                                <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                  {record.plate || record.vin || record.reference_no || record.case_key}
+                                </h3>
+                                <p className={`text-sm ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                                  {record.branch_name} • {record.created_by_name || 'Stajyer'} • {new Date(record.created_at).toLocaleString('tr-TR')}
+                                </p>
+                                
+                                <div className="flex items-center gap-2 mt-3">
+                                  <button
+                                    onClick={() => handleApproveRecord(record.id)}
+                                    className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                    Onayla
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const reason = prompt('Ret sebebi:');
+                                      if (reason) handleRejectRecord(record.id, reason);
+                                    }}
+                                    className="px-4 py-2 bg-red-500/10 text-red-400 text-sm font-medium rounded-lg hover:bg-red-500/20 transition-colors flex items-center gap-1"
+                                  >
+                                    <X className="w-4 h-4" />
+                                    Reddet
+                                  </button>
+                                  <button
+                                    onClick={() => navigate(`/record/${record.id}`)}
+                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                      theme === 'dark' 
+                                        ? 'bg-[#27272a] text-zinc-300 hover:bg-[#3f3f46]'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    Detay
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Apprentices */}
+              {activeTab === 'apprentices' && (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-between">
+                    <select
+                      value={filterBranch}
+                      onChange={(e) => { setFilterBranch(e.target.value); setTimeout(fetchData, 100); }}
+                      className={`h-11 px-4 rounded-xl border ${
+                        theme === 'dark' 
+                          ? 'bg-[#18181b] border-[#27272a] text-white'
+                          : 'bg-white border-gray-200 text-gray-900'
+                      }`}
+                    >
+                      <option value="">{t('misc.all')} Şubeler</option>
+                      {BRANCHES.map(b => (
+                        <option key={b.code} value={b.code}>{b.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => { setEditingStaff({ role: 'apprentice' }); setShowStaffModal(true); }}
+                      className="h-11 px-6 bg-[#FACC15] text-black font-bold rounded-xl flex items-center gap-2 hover:bg-yellow-400 transition-colors"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Stajyer Ekle
+                    </button>
+                  </div>
+
+                  {apprentices.length === 0 ? (
+                    <div className="text-center py-12">
+                      <GraduationCap className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`} />
+                      <p className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}>
+                        Henüz stajyer eklenmemiş
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {apprentices.map((a) => (
+                        <div key={a.id} className={`p-4 rounded-xl border ${
+                          theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                        }`}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                theme === 'dark' ? 'bg-[#27272a]' : 'bg-gray-100'
+                              }`}>
+                                <GraduationCap className={`w-6 h-6 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                    {a.full_name}
+                                  </h4>
+                                  <span className={`w-2 h-2 rounded-full ${a.is_online ? 'bg-green-400' : 'bg-zinc-600'}`} />
+                                </div>
+                                <p className={`text-sm ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                                  Stajyer
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteStaff(a.id)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                theme === 'dark'
+                                  ? 'text-zinc-400 hover:text-red-400 hover:bg-red-500/10'
+                                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                              }`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2 text-sm">
+                            <div className={`flex items-center gap-2 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}>
+                              <Building2 className="w-4 h-4" />
+                              <span>{a.branch_name}</span>
+                            </div>
+                            {a.phone && (
+                              <div className={`flex items-center gap-2 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}>
+                                <Phone className="w-4 h-4" />
+                                <a href={`tel:${a.phone}`} className={theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}>
+                                  {a.phone}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Settings */}
               {activeTab === 'settings' && settings && (
                 <div className="max-w-2xl space-y-6">
                   {/* OCR Settings */}
-                  <div className="record-card p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t('settings.ocr')}</h3>
+                  <div className={`p-6 rounded-xl border ${
+                    theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                  }`}>
+                    <h3 className={`text-lg font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {t('settings.ocr')}
+                    </h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-2">
+                        <label className={`block text-sm font-medium mb-2 ${
+                          theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+                        }`}>
                           {t('settings.ocrProvider')}
                         </label>
                         <select
                           value={settings.ocr_provider}
                           onChange={(e) => handleSettingsChange('ocr_provider', e.target.value)}
-                          className="w-full h-11 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white"
+                          className={`w-full h-11 px-4 rounded-lg border ${
+                            theme === 'dark'
+                              ? 'bg-[#09090b] border-[#27272a] text-white'
+                              : 'bg-gray-50 border-gray-200 text-gray-900'
+                          }`}
                         >
                           <option value="browser">{t('settings.browserOcr')}</option>
                           <option value="vision">{t('settings.visionApi')}</option>
