@@ -876,7 +876,7 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
 async def get_my_stats(current_user: dict = Depends(get_current_user)):
     branch_code = current_user.get('branch_code')
     
-    query = {"status": "active"}
+    query = {"status": {"$in": ["active", "approved"]}}
     if branch_code:
         query["branch_code"] = branch_code
     
@@ -887,6 +887,14 @@ async def get_my_stats(current_user: dict = Depends(get_current_user)):
     roadassist = await db.uploads.count_documents({**type_query, "record_type": "roadassist"})
     damaged = await db.uploads.count_documents({**type_query, "record_type": "damaged"})
     pdi = await db.uploads.count_documents({**type_query, "record_type": "pdi"})
+    
+    # Pending review count for staff
+    pending_count = 0
+    if current_user.get('role') == 'staff' and branch_code:
+        pending_count = await db.uploads.count_documents({
+            "branch_code": branch_code,
+            "status": "pending_review"
+        })
     
     # Recent records for this branch
     recent = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).limit(10).to_list(10)
@@ -899,9 +907,207 @@ async def get_my_stats(current_user: dict = Depends(get_current_user)):
             "damaged": damaged,
             "pdi": pdi
         },
+        "pending_count": pending_count,
         "recent": recent,
         "branch_name": get_branch_name(branch_code) if branch_code else None
     }
+
+# ============ NOTIFICATION ROUTES ============
+
+@api_router.get("/notifications")
+async def get_notifications(
+    unread_only: bool = False,
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {"recipient_id": current_user['id']}
+    if unread_only:
+        query["is_read"] = False
+    
+    notifications = await db.notifications.find(query, {"_id": 0}).sort("created_at", -1).limit(limit).to_list(limit)
+    unread_count = await db.notifications.count_documents({"recipient_id": current_user['id'], "is_read": False})
+    
+    return {
+        "notifications": notifications,
+        "unread_count": unread_count
+    }
+
+@api_router.post("/notifications")
+async def create_notification(
+    notification: NotificationCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    # Staff ve Admin bildirim gönderebilir
+    if current_user.get('role') not in ['admin', 'staff']:
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    # Kayıt var mı kontrol et
+    record = await db.uploads.find_one({"id": notification.record_id}, {"_id": 0})
+    if not record:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
+    
+    # Alıcı var mı kontrol et
+    recipient = await db.users.find_one({"id": notification.recipient_id}, {"_id": 0})
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Alıcı bulunamadı")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    notification_doc = {
+        "id": str(uuid.uuid4()),
+        "record_id": notification.record_id,
+        "sender_id": current_user['id'],
+        "sender_name": current_user.get('full_name', ''),
+        "recipient_id": notification.recipient_id,
+        "recipient_name": recipient.get('full_name', ''),
+        "notification_type": notification.notification_type.value,
+        "message": notification.message,
+        "is_read": False,
+        "created_at": now
+    }
+    
+    await db.notifications.insert_one(notification_doc)
+    del notification_doc['_id']
+    
+    return notification_doc
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.notifications.update_one(
+        {"id": notification_id, "recipient_id": current_user['id']},
+        {"$set": {"is_read": True}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Bildirim bulunamadı")
+    return {"success": True}
+
+@api_router.put("/notifications/read-all")
+async def mark_all_notifications_read(current_user: dict = Depends(get_current_user)):
+    await db.notifications.update_many(
+        {"recipient_id": current_user['id'], "is_read": False},
+        {"$set": {"is_read": True}}
+    )
+    return {"success": True}
+
+# ============ RECORD APPROVAL ROUTES (for Apprentice workflow) ============
+
+@api_router.get("/records/pending")
+async def get_pending_records(
+    current_user: dict = Depends(get_current_user)
+):
+    """Danışmanlar için bekleyen kayıtları getir"""
+    if current_user.get('role') not in ['admin', 'staff']:
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    query = {"status": "pending_review"}
+    
+    # Staff sadece kendi şubesini görebilir
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    records = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return records
+
+@api_router.put("/records/{record_id}/approve")
+async def approve_record(record_id: str, current_user: dict = Depends(get_current_user)):
+    """Kaydı onayla"""
+    if current_user.get('role') not in ['admin', 'staff']:
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    query = {"id": record_id, "status": "pending_review"}
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    record = await db.uploads.find_one(query, {"_id": 0})
+    if not record:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı veya zaten onaylanmış")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    await db.uploads.update_one(
+        {"id": record_id},
+        {"$set": {"status": "approved", "approved_by": current_user['id'], "approved_at": now, "updated_at": now}}
+    )
+    
+    # Stajyere bildirim gönder
+    if record.get('user_id'):
+        notification_doc = {
+            "id": str(uuid.uuid4()),
+            "record_id": record_id,
+            "sender_id": current_user['id'],
+            "sender_name": current_user.get('full_name', ''),
+            "recipient_id": record['user_id'],
+            "recipient_name": record.get('created_by_name', ''),
+            "notification_type": "record_approved",
+            "message": f"Kaydınız onaylandı: {record.get('case_key', '')}",
+            "is_read": False,
+            "created_at": now
+        }
+        await db.notifications.insert_one(notification_doc)
+    
+    return {"success": True, "message": "Kayıt onaylandı"}
+
+@api_router.put("/records/{record_id}/reject")
+async def reject_record(
+    record_id: str,
+    reason: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Kaydı reddet"""
+    if current_user.get('role') not in ['admin', 'staff']:
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    query = {"id": record_id, "status": "pending_review"}
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    record = await db.uploads.find_one(query, {"_id": 0})
+    if not record:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    await db.uploads.update_one(
+        {"id": record_id},
+        {"$set": {"status": "rejected", "rejected_by": current_user['id'], "rejection_reason": reason, "updated_at": now}}
+    )
+    
+    # Stajyere bildirim gönder
+    if record.get('user_id'):
+        notification_doc = {
+            "id": str(uuid.uuid4()),
+            "record_id": record_id,
+            "sender_id": current_user['id'],
+            "sender_name": current_user.get('full_name', ''),
+            "recipient_id": record['user_id'],
+            "recipient_name": record.get('created_by_name', ''),
+            "notification_type": "record_rejected",
+            "message": f"Kaydınız reddedildi: {record.get('case_key', '')}. Sebep: {reason}",
+            "is_read": False,
+            "created_at": now
+        }
+        await db.notifications.insert_one(notification_doc)
+    
+    return {"success": True, "message": "Kayıt reddedildi"}
+
+# ============ APPRENTICE MANAGEMENT ============
+
+@api_router.get("/apprentices", response_model=List[UserResponse])
+async def get_apprentices(
+    branch_code: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Stajyerleri listele"""
+    if current_user.get('role') not in ['admin', 'staff']:
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    query = {"role": "apprentice"}
+    
+    # Staff sadece kendi şubesindeki stajyerleri görebilir
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    elif branch_code:
+        query["branch_code"] = branch_code
+    
+    apprentices = await db.users.find(query, {"_id": 0, "password": 0}).to_list(100)
+    return [UserResponse(**a) for a in apprentices]
 
 # Health check
 @api_router.get("/")
