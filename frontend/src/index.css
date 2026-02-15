@@ -4,7 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Dark theme (default) */
+:root,
+.dark {
   --background: 0 0% 4%;
   --foreground: 0 0% 98%;
   --card: 0 0% 7%;
@@ -26,7 +28,7 @@
   --ring: 48 96% 53%;
   --radius: 0.5rem;
   
-  /* Custom colors */
+  /* Custom colors - Dark */
   --rt-yellow: #FACC15;
   --rt-red: #71010D;
   --rt-dark: #09090b;
@@ -35,6 +37,43 @@
   --rt-success: #16A34A;
   --rt-warning: #F59E0B;
   --rt-error: #EF4444;
+  --rt-text: #fafafa;
+  --rt-text-muted: #a1a1aa;
+}
+
+/* Light theme */
+.light {
+  --background: 0 0% 98%;
+  --foreground: 0 0% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
+  --primary: 48 96% 53%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 85% 22%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 48 96% 53%;
+  
+  /* Custom colors - Light */
+  --rt-yellow: #FACC15;
+  --rt-red: #71010D;
+  --rt-dark: #f9fafb;
+  --rt-surface: #ffffff;
+  --rt-surface-light: #e5e7eb;
+  --rt-success: #16A34A;
+  --rt-warning: #F59E0B;
+  --rt-error: #EF4444;
+  --rt-text: #111827;
+  --rt-text-muted: #6b7280;
 }
 
 * {

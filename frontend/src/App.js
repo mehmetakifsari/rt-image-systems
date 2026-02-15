@@ -5,8 +5,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { OfflineProvider } from './contexts/OfflineContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 // Pages
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import NewRecordPage from './pages/NewRecordPage';
@@ -54,6 +56,9 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public Landing Page */}
+      <Route path="/welcome" element={<LandingPage />} />
+      
       <Route 
         path="/login" 
         element={
@@ -94,29 +99,46 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/welcome" replace />} />
     </Routes>
   );
 }
 
+// Themed Toaster Component
+const ThemedToaster = () => {
+  const { theme } = useTheme();
+  
+  return (
+    <Toaster 
+      position="top-center"
+      toastOptions={{
+        style: theme === 'dark' 
+          ? {
+              background: '#18181b',
+              border: '1px solid #27272a',
+              color: '#fafafa'
+            }
+          : {
+              background: '#ffffff',
+              border: '1px solid #e5e7eb',
+              color: '#111827'
+            }
+      }}
+    />
+  );
+};
+
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <OfflineProvider>
-          <AppRoutes />
-          <Toaster 
-            position="top-center"
-            toastOptions={{
-              style: {
-                background: '#18181b',
-                border: '1px solid #27272a',
-                color: '#fafafa'
-              }
-            }}
-          />
-        </OfflineProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <OfflineProvider>
+            <AppRoutes />
+            <ThemedToaster />
+          </OfflineProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
