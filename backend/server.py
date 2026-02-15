@@ -1013,23 +1013,6 @@ async def mark_all_notifications_read(current_user: dict = Depends(get_current_u
 
 # ============ RECORD APPROVAL ROUTES (for Apprentice workflow) ============
 
-@api_router.get("/records/pending")
-async def get_pending_records(
-    current_user: dict = Depends(get_current_user)
-):
-    """Danışmanlar için bekleyen kayıtları getir"""
-    if current_user.get('role') not in ['admin', 'staff']:
-        raise HTTPException(status_code=403, detail="Yetkiniz yok")
-    
-    query = {"status": "pending_review"}
-    
-    # Staff sadece kendi şubesini görebilir
-    if current_user.get('role') == 'staff':
-        query["branch_code"] = current_user.get('branch_code')
-    
-    records = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
-    return records
-
 @api_router.put("/records/{record_id}/approve")
 async def approve_record(record_id: str, current_user: dict = Depends(get_current_user)):
     """Kaydı onayla"""
