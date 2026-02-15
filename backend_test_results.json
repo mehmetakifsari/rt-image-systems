@@ -1,26 +1,49 @@
 {
   "passed": [
     "API Health Check",
+    "Get Branches",
     "Admin Login",
     "Get Current User",
+    "Staff Login",
+    "Admin Dashboard Branches",
+    "Create Staff User",
+    "Get Staff List",
+    "Staff Branch Filtering",
     "Create Standard Record",
-    "Create RoadAssist Record",
-    "Create Damaged Record",
-    "Create PDI Record",
-    "Get Records List",
+    "Work Order Branch Extraction",
+    "Branch Selection Required",
     "Get Single Record",
-    "Search Records",
+    "Staff Record Restriction",
     "Update Record Note",
     "File Upload",
     "Get Dashboard Stats",
     "Get Admin Settings",
-    "Update Admin Settings"
+    "Update Admin Settings",
+    "Delete Staff User",
+    "Logout Functionality"
   ],
-  "failed": [],
+  "failed": [
+    {
+      "test": "Create RoadAssist Record",
+      "details": "Status: 400 - {\"detail\":\"Yol yard\u0131m kayd\u0131 i\u00e7in \u015fube se\u00e7imi zorunlu\"}"
+    },
+    {
+      "test": "Create Damaged Record",
+      "details": "Status: 400 - {\"detail\":\"Hasarl\u0131 ara\u00e7 kayd\u0131 i\u00e7in \u015fube se\u00e7imi zorunlu\"}"
+    },
+    {
+      "test": "Create PDI Record",
+      "details": "Status: 400 - {\"detail\":\"PDI kayd\u0131 i\u00e7in \u015fube se\u00e7imi zorunlu\"}"
+    },
+    {
+      "test": "Get Records List",
+      "details": "Status: 520"
+    }
+  ],
   "summary": {
-    "total_tests": 15,
-    "passed_tests": 15,
-    "failed_tests": 0,
-    "success_rate": "100.0%"
+    "total_tests": 25,
+    "passed_tests": 21,
+    "failed_tests": 4,
+    "success_rate": "84.0%"
   }
 }
