@@ -837,6 +837,7 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
         settings = {
             "id": str(uuid.uuid4()),
             "ocr_provider": "browser",
+            "voice_provider": "browser",
             "storage_type": "local",
             "language": "tr"
         }
