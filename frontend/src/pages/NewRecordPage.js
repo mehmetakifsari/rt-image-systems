@@ -69,6 +69,24 @@ const NewRecordPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [showOCR, setShowOCR] = useState(false);
+  
+  // Voice recognition for notes
+  const {
+    transcript,
+    isListening,
+    isRecording,
+    isTranscribing,
+    isSupported: voiceSupported,
+    startListening,
+    stopListening,
+    startRecording,
+    stopRecordingAndTranscribe,
+    cancelRecording,
+    resetTranscript,
+    setTranscript
+  } = useSpeechRecognition();
+  
+  const [voiceMode, setVoiceMode] = useState('browser'); // 'browser' or 'server'
 
   const handleTypeSelect = (type) => {
     setSelectedType(type);
