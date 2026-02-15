@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, FileText, Settings, LogOut, Menu, Users,
   Truck, Wrench, AlertTriangle, ClipboardCheck, ChevronRight,
   Image, Search, Plus, Edit2, Trash2, Phone, MessageCircle,
-  Building2, User, Loader2, X
+  Building2, User, Loader2, X, Moon, Sun, Bell, Check, Clock,
+  GraduationCap, Send
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { APP_VERSION } from '../config/version';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -25,19 +28,28 @@ const BRANCHES = [
 const JOB_TITLES = [
   { code: "garanti_danisman", name: "Garanti Danışmanı" },
   { code: "hasar_danisman", name: "Hasar Danışmanı" },
-  { code: "musteri_kabul", name: "Müşteri Kabul Personeli" }
+  { code: "musteri_kabul", name: "Müşteri Kabul Personeli" },
+  { code: "stajyer", name: "Stajyer/Çırak" }
+];
+
+const USER_ROLES = [
+  { code: "staff", name: "Danışman/Personel" },
+  { code: "apprentice", name: "Stajyer/Çırak" }
 ];
 
 const AdminPage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [records, setRecords] = useState([]);
+  const [pendingRecords, setPendingRecords] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [apprentices, setApprentices] = useState([]);
   const [settings, setSettings] = useState(null);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -45,6 +57,8 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
