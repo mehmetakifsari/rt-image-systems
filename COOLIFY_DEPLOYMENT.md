@@ -21,6 +21,11 @@ REACT_APP_BACKEND_URL=https://claims.visupanel.com
 JWT_SECRET=your-super-secret-key-minimum-32-chars
 ```
 
+#### Analytics (Önerilen):
+```
+REACT_APP_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
 #### Opsiyonel (Harici Servisler):
 ```
 GOOGLE_VISION_API_KEY=  # OCR için
