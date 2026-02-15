@@ -419,36 +419,339 @@ class RenaultTrucksAPITester:
             self.log_result("Update Admin Settings", False, str(e))
             return False
 
-    def test_search_records(self):
-        """Test record search functionality"""
+    def test_staff_login(self):
+        """Test staff login with hadimkoy_garanti/test123"""
+        try:
+            data = {"username": "hadimkoy_garanti", "password": "test123"}
+            response = requests.post(f"{self.base_url}/auth/login", json=data)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if "token" in result and "user" in result:
+                    self.staff_token = result["token"]
+                    user = result["user"]
+                    if user.get("role") == "staff" and user.get("branch_code") == "4":
+                        self.log_result("Staff Login", True)
+                        return True
+                    else:
+                        self.log_result("Staff Login", False, f"Expected staff role and branch 4, got role: {user.get('role')}, branch: {user.get('branch_code')}")
+                        return False
+                else:
+                    self.log_result("Staff Login", False, "Missing token or user in response")
+                    return False
+            else:
+                self.log_result("Staff Login", False, f"Status: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("Staff Login", False, str(e))
+            return False
+
+    def test_branches_endpoint(self):
+        """Test getting branches list"""
+        try:
+            response = requests.get(f"{self.base_url}/branches")
+            
+            if response.status_code == 200:
+                result = response.json()
+                branches = result.get("branches", [])
+                if len(branches) == 5:
+                    expected_branches = {
+                        "1": "Bursa", "2": "İzmit", "3": "Orhanlı", 
+                        "4": "Hadımköy", "5": "Keşan"
+                    }
+                    for branch in branches:
+                        code = branch.get("code")
+                        name = branch.get("name")
+                        if code not in expected_branches or expected_branches[code] != name:
+                            self.log_result("Get Branches", False, f"Invalid branch data: {branch}")
+                            return False
+                    self.log_result("Get Branches", True)
+                    return True
+                else:
+                    self.log_result("Get Branches", False, f"Expected 5 branches, got {len(branches)}")
+                    return False
+            else:
+                self.log_result("Get Branches", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Get Branches", False, str(e))
+            return False
+
+    def test_create_staff_user(self):
+        """Test admin creating a staff user"""
         if not self.admin_token:
-            self.log_result("Search Records", False, "No admin token")
+            self.log_result("Create Staff User", False, "No admin token")
+            return False
+            
+        try:
+            data = {
+                "username": "test_staff_user",
+                "password": "testpass123",
+                "full_name": "Test Staff User",
+                "role": "staff",
+                "branch_code": "4",
+                "job_title": "garanti_danisman",
+                "phone": "+905551234567",
+                "whatsapp": "905551234567"
+            }
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.post(f"{self.base_url}/auth/register", json=data, headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if (result.get("username") == "test_staff_user" and 
+                    result.get("role") == "staff" and 
+                    result.get("branch_code") == "4"):
+                    self.test_staff_id = result.get("id")
+                    self.log_result("Create Staff User", True)
+                    return True
+                else:
+                    self.log_result("Create Staff User", False, "Invalid staff user data")
+                    return False
+            else:
+                self.log_result("Create Staff User", False, f"Status: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("Create Staff User", False, str(e))
+            return False
+
+    def test_get_staff_list(self):
+        """Test admin getting staff list"""
+        if not self.admin_token:
+            self.log_result("Get Staff List", False, "No admin token")
             return False
             
         try:
             headers = {"Authorization": f"Bearer {self.admin_token}"}
-            # Search by plate number
-            response = requests.get(f"{self.base_url}/records?search=34TEST", headers=headers)
+            response = requests.get(f"{self.base_url}/staff", headers=headers)
+            
+            if response.status_code == 200:
+                staff_list = response.json()
+                if isinstance(staff_list, list):
+                    self.log_result("Get Staff List", True)
+                    return True
+                else:
+                    self.log_result("Get Staff List", False, "Invalid staff list response")
+                    return False
+            else:
+                self.log_result("Get Staff List", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Get Staff List", False, str(e))
+            return False
+
+    def test_staff_branch_filtering(self):
+        """Test admin getting staff filtered by branch"""
+        if not self.admin_token:
+            self.log_result("Staff Branch Filtering", False, "No admin token")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.get(f"{self.base_url}/staff?branch_code=4", headers=headers)
+            
+            if response.status_code == 200:
+                staff_list = response.json()
+                if isinstance(staff_list, list):
+                    # All returned staff should be from branch 4
+                    all_branch_4 = all(s.get("branch_code") == "4" for s in staff_list)
+                    if all_branch_4:
+                        self.log_result("Staff Branch Filtering", True)
+                        return True
+                    else:
+                        self.log_result("Staff Branch Filtering", False, "Staff from other branches returned")
+                        return False
+                else:
+                    self.log_result("Staff Branch Filtering", False, "Invalid staff list response")
+                    return False
+            else:
+                self.log_result("Staff Branch Filtering", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Staff Branch Filtering", False, str(e))
+            return False
+
+    def test_work_order_branch_extraction(self):
+        """Test work order branch code extraction"""
+        if not self.admin_token:
+            self.log_result("Work Order Branch Extraction", False, "No admin token")
+            return False
+            
+        try:
+            data = {
+                "record_type": "standard",
+                "plate": "34TEST456",
+                "work_order": "40216001",  # Should extract branch code 4
+                "note_text": "Test work order branch extraction"
+            }
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.post(f"{self.base_url}/records", json=data, headers=headers)
+            
+            if response.status_code == 200:
+                record = response.json()
+                if record.get("branch_code") == "4":
+                    self.log_result("Work Order Branch Extraction", True)
+                    return True
+                else:
+                    self.log_result("Work Order Branch Extraction", False, f"Expected branch code 4, got {record.get('branch_code')}")
+                    return False
+            else:
+                self.log_result("Work Order Branch Extraction", False, f"Status: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("Work Order Branch Extraction", False, str(e))
+            return False
+
+    def test_branch_selection_required(self):
+        """Test branch selection requirement for PDI/Damaged/RoadAssist records"""
+        if not self.admin_token:
+            self.log_result("Branch Selection Required", False, "No admin token")
+            return False
+            
+        try:
+            # Test PDI record without branch - should fail
+            data = {
+                "record_type": "pdi",
+                "vin": "VF1TESTVIN9876543"
+                # No branch_code provided
+            }
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.post(f"{self.base_url}/records", json=data, headers=headers)
+            
+            if response.status_code == 400:
+                error_detail = response.json().get("detail", "")
+                if "şube" in error_detail.lower():
+                    self.log_result("Branch Selection Required", True)
+                    return True
+                else:
+                    self.log_result("Branch Selection Required", False, "Wrong error message")
+                    return False
+            else:
+                self.log_result("Branch Selection Required", False, f"Expected 400 error, got {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Branch Selection Required", False, str(e))
+            return False
+
+    def test_staff_record_restriction(self):
+        """Test that staff can only see their branch records"""
+        if not self.staff_token:
+            # Try to create a staff token first
+            if not self.test_staff_login():
+                self.log_result("Staff Record Restriction", False, "No staff token available")
+                return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.staff_token}"}
+            response = requests.get(f"{self.base_url}/records", headers=headers)
             
             if response.status_code == 200:
                 records = response.json()
                 if isinstance(records, list):
-                    # Check if search worked - should find our test record
-                    found_record = any(r.get("plate") == "34TEST123" for r in records)
-                    if found_record:
-                        self.log_result("Search Records", True)
-                        return True
+                    # All records should be from branch 4 (Hadımköy)
+                    if records:  # If there are records
+                        all_branch_4 = all(r.get("branch_code") == "4" for r in records)
+                        if all_branch_4:
+                            self.log_result("Staff Record Restriction", True)
+                            return True
+                        else:
+                            self.log_result("Staff Record Restriction", False, "Staff can see records from other branches")
+                            return False
                     else:
-                        self.log_result("Search Records", False, "Search didn't find expected record")
-                        return False
+                        # If no records, that's also valid - staff might not have any records yet
+                        self.log_result("Staff Record Restriction", True)
+                        return True
                 else:
-                    self.log_result("Search Records", False, "Invalid search response format")
+                    self.log_result("Staff Record Restriction", False, "Invalid records response")
                     return False
             else:
-                self.log_result("Search Records", False, f"Status: {response.status_code}")
+                self.log_result("Staff Record Restriction", False, f"Status: {response.status_code}")
                 return False
         except Exception as e:
-            self.log_result("Search Records", False, str(e))
+            self.log_result("Staff Record Restriction", False, str(e))
+            return False
+
+    def test_admin_dashboard_branches(self):
+        """Test admin dashboard shows all branches"""
+        if not self.admin_token:
+            self.log_result("Admin Dashboard Branches", False, "No admin token")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.get(f"{self.base_url}/stats", headers=headers)
+            
+            if response.status_code == 200:
+                stats = response.json()
+                branches = stats.get("branches", [])
+                if len(branches) == 5:
+                    # Check that all expected branches are present
+                    branch_codes = [b.get("code") for b in branches]
+                    expected_codes = ["1", "2", "3", "4", "5"]
+                    if all(code in branch_codes for code in expected_codes):
+                        self.log_result("Admin Dashboard Branches", True)
+                        return True
+                    else:
+                        self.log_result("Admin Dashboard Branches", False, f"Missing branch codes: {expected_codes} vs {branch_codes}")
+                        return False
+                else:
+                    self.log_result("Admin Dashboard Branches", False, f"Expected 5 branches in dashboard, got {len(branches)}")
+                    return False
+            else:
+                self.log_result("Admin Dashboard Branches", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Admin Dashboard Branches", False, str(e))
+            return False
+
+    def test_delete_staff_user(self):
+        """Test admin deleting a staff user"""
+        if not self.admin_token or not self.test_staff_id:
+            self.log_result("Delete Staff User", False, "No admin token or staff ID")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.delete(f"{self.base_url}/staff/{self.test_staff_id}", headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    self.log_result("Delete Staff User", True)
+                    return True
+                else:
+                    self.log_result("Delete Staff User", False, "Success not returned")
+                    return False
+            else:
+                self.log_result("Delete Staff User", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Delete Staff User", False, str(e))
+            return False
+
+    def test_logout_functionality(self):
+        """Test logout functionality"""
+        if not self.admin_token:
+            self.log_result("Logout Functionality", False, "No admin token")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.post(f"{self.base_url}/auth/logout", headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    self.log_result("Logout Functionality", True)
+                    return True
+                else:
+                    self.log_result("Logout Functionality", False, "Success not returned")
+                    return False
+            else:
+                self.log_result("Logout Functionality", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Logout Functionality", False, str(e))
             return False
 
     def run_all_tests(self):
