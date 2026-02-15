@@ -615,6 +615,24 @@ async def get_records(
     records = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     return [RecordResponse(**r) for r in records]
 
+# IMPORTANT: This route MUST be defined before /records/{record_id} to avoid route collision
+@api_router.get("/records/pending")
+async def get_pending_records(
+    current_user: dict = Depends(get_current_user)
+):
+    """Danışmanlar için bekleyen kayıtları getir"""
+    if current_user.get('role') not in ['admin', 'staff']:
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    query = {"status": "pending_review"}
+    
+    # Staff sadece kendi şubesini görebilir
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    records = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return records
+
 @api_router.get("/records/{record_id}", response_model=RecordResponse)
 async def get_record(record_id: str, current_user: dict = Depends(get_current_user)):
     query = {"id": record_id}
