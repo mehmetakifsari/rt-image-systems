@@ -830,6 +830,7 @@ class RenaultTrucksAPITester:
         
         # Data retrieval and filtering tests
         self.test_get_records_list()
+        self.test_branch_filter_records()
         self.test_get_single_record()
         self.test_staff_record_restriction()
         
