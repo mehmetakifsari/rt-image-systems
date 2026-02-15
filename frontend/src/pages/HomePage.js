@@ -249,7 +249,7 @@ const HomePage = () => {
       {/* FAB - New Record */}
       <button
         onClick={() => navigate('/new')}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-[#FACC15] rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-400 active:scale-95 transition-all z-50"
+        className="fixed bottom-20 right-6 w-14 h-14 bg-[#FACC15] rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-400 active:scale-95 transition-all z-50"
         data-testid="new-record-fab"
       >
         <Plus className="w-6 h-6 text-black" />
