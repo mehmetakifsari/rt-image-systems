@@ -1163,8 +1163,13 @@ async def startup():
     await db.uploads.create_index("work_order")
     await db.uploads.create_index("vin_last5")
     await db.uploads.create_index("branch_code")
+    await db.uploads.create_index("status")
     await db.users.create_index("username", unique=True)
     await db.users.create_index("branch_code")
+    await db.users.create_index("role")
+    await db.notifications.create_index("recipient_id")
+    await db.notifications.create_index("is_read")
+    await db.notifications.create_index([("recipient_id", 1), ("is_read", 1)])
     
     # Create default admin if not exists
     admin = await db.users.find_one({"username": "admin"})
