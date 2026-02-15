@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Truck, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { Truck, Eye, EyeOff, Loader2, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
+import { APP_VERSION } from '../config/version';
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
   const { login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +40,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
+    <div className={`min-h-screen flex items-center justify-center p-4 transition-colors ${
+      theme === 'dark' ? 'bg-[#09090b]' : 'bg-gray-100'
+    }`}>
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -46,46 +51,82 @@ const LoginPage = () => {
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Language toggle */}
-        <button
-          onClick={toggleLanguage}
-          className="absolute -top-12 right-0 px-3 py-1.5 text-sm bg-zinc-800 text-zinc-300 rounded-full hover:bg-zinc-700 transition-colors"
-          data-testid="language-toggle"
-        >
-          {i18n.language === 'tr' ? 'EN' : 'TR'}
-        </button>
+        {/* Top controls */}
+        <div className="absolute -top-12 right-0 flex items-center gap-2">
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`p-2 rounded-full transition-colors ${
+              theme === 'dark'
+                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                : 'bg-white text-gray-600 hover:bg-gray-100 shadow'
+            }`}
+            data-testid="login-theme-toggle"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          
+          {/* Language toggle */}
+          <button
+            onClick={toggleLanguage}
+            className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+              theme === 'dark'
+                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                : 'bg-white text-gray-600 hover:bg-gray-100 shadow'
+            }`}
+            data-testid="language-toggle"
+          >
+            {i18n.language === 'tr' ? 'EN' : 'TR'}
+          </button>
+        </div>
 
         {/* Login card */}
-        <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-8 shadow-2xl">
+        <div className={`rounded-2xl p-8 shadow-2xl border transition-colors ${
+          theme === 'dark' 
+            ? 'bg-[#18181b] border-[#27272a]' 
+            : 'bg-white border-gray-200'
+        }`}>
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FACC15] rounded-2xl mb-4">
               <Truck className="w-8 h-8 text-black" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">
+            <h1 className={`text-2xl font-bold tracking-wide ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
               {t('auth.loginTitle')}
             </h1>
-            <p className="text-zinc-400 text-sm mt-1">{t('auth.loginSubtitle')}</p>
+            <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}>
+              {t('auth.loginSubtitle')}
+            </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+              }`}>
                 {t('auth.username')}
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full h-12 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white placeholder-zinc-500 focus:border-[#FACC15] focus:ring-1 focus:ring-[#FACC15] transition-colors"
+                className={`w-full h-12 px-4 border rounded-lg transition-colors ${
+                  theme === 'dark'
+                    ? 'bg-[#09090b] border-[#27272a] text-white placeholder-zinc-500'
+                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
+                } focus:border-[#FACC15] focus:ring-1 focus:ring-[#FACC15]`}
                 placeholder={t('auth.username')}
                 data-testid="username-input"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+              }`}>
                 {t('auth.password')}
               </label>
               <div className="relative">
@@ -93,14 +134,20 @@ const LoginPage = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 px-4 pr-12 bg-[#09090b] border border-[#27272a] rounded-lg text-white placeholder-zinc-500 focus:border-[#FACC15] focus:ring-1 focus:ring-[#FACC15] transition-colors"
+                  className={`w-full h-12 px-4 pr-12 border rounded-lg transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-[#09090b] border-[#27272a] text-white placeholder-zinc-500'
+                      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
+                  } focus:border-[#FACC15] focus:ring-1 focus:ring-[#FACC15]`}
                   placeholder="••••••••"
                   data-testid="password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                    theme === 'dark' ? 'text-zinc-500 hover:text-zinc-300' : 'text-gray-400 hover:text-gray-600'
+                  }`}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -125,11 +172,20 @@ const LoginPage = () => {
           </form>
 
           {/* Demo credentials hint */}
-          <div className="mt-6 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
-            <p className="text-xs text-zinc-500 text-center">
+          <div className={`mt-6 p-3 rounded-lg border ${
+            theme === 'dark' 
+              ? 'bg-zinc-900/50 border-zinc-800' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`text-xs text-center ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
               Demo: admin / admin123
             </p>
           </div>
+
+          {/* Version */}
+          <p className={`text-center text-xs mt-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}>
+            v{APP_VERSION}
+          </p>
         </div>
       </div>
     </div>
