@@ -12,7 +12,9 @@ class RenaultTrucksAPITester:
         self.base_url = base_url
         self.token = None
         self.admin_token = None
+        self.staff_token = None
         self.test_record_id = None
+        self.test_staff_id = None
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = {
