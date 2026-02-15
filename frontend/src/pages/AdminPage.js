@@ -1160,7 +1160,7 @@ const StaffModal = ({ staff, onClose, onSave }) => {
       <div className="bg-[#18181b] border border-[#27272a] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-[#27272a]">
           <h3 className="text-lg font-bold text-white">
-            {staff ? t('action.edit') : t('action.addStaff')}
+            {staff?.id ? t('action.edit') : (isApprentice ? 'Stajyer Ekle' : t('action.addStaff'))}
           </h3>
           <button onClick={onClose} className="text-zinc-400 hover:text-white">
             <X className="w-5 h-5" />
@@ -1168,6 +1168,23 @@ const StaffModal = ({ staff, onClose, onSave }) => {
         </div>
 
         <div className="p-4 space-y-4">
+          {/* Rol Seçimi - sadece yeni oluştururken */}
+          {!staff?.id && (
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Hesap Türü *
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                className="w-full h-11 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white"
+              >
+                <option value="staff">Danışman/Personel</option>
+                <option value="apprentice">Stajyer/Çırak</option>
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">
               {t('auth.username')} *
@@ -1176,12 +1193,12 @@ const StaffModal = ({ staff, onClose, onSave }) => {
               type="text"
               value={formData.username}
               onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-              disabled={!!staff}
+              disabled={!!staff?.id}
               className="w-full h-11 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white disabled:opacity-50"
             />
           </div>
 
-          {!staff && (
+          {!staff?.id && (
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
                 {t('auth.password')} *
