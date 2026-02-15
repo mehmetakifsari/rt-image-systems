@@ -123,3 +123,7 @@ watchfiles==1.1.1
 websockets==15.0.1
 yarl==1.22.0
 zipp==3.23.0
+aiohttp==3.13.3
+boto3==1.42.42
+emergentintegrations==0.1.0
+google-cloud-vision==3.12.1
