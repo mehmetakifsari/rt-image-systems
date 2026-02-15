@@ -189,19 +189,21 @@ const AdminPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex">
+    <div className={`min-h-screen flex transition-colors ${
+      theme === 'dark' ? 'bg-[#09090b]' : 'bg-gray-50'
+    }`}>
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#18181b] border-r border-[#27272a] transform transition-transform lg:translate-x-0 ${
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 border-r transform transition-transform lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-4 border-b border-[#27272a]">
+      } ${theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'}`}>
+        <div className={`p-4 border-b ${theme === 'dark' ? 'border-[#27272a]' : 'border-gray-200'}`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#FACC15] rounded-xl flex items-center justify-center">
               <Truck className="w-5 h-5 text-black" />
             </div>
             <div>
-              <h1 className="text-white font-bold">RT ADMIN</h1>
-              <p className="text-xs text-zinc-500">{user?.full_name}</p>
+              <h1 className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>RT ADMIN</h1>
+              <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>{user?.full_name}</p>
             </div>
           </div>
         </div>
@@ -216,7 +218,9 @@ const AdminPage = () => {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                   activeTab === item.id
                     ? 'bg-[#FACC15] text-black'
-                    : 'text-zinc-400 hover:text-white hover:bg-[#27272a]'
+                    : theme === 'dark'
+                      ? 'text-zinc-400 hover:text-white hover:bg-[#27272a]'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
                 data-testid={`menu-${item.id}`}
               >
@@ -227,10 +231,28 @@ const AdminPage = () => {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#27272a]">
+        <div className={`absolute bottom-0 left-0 right-0 p-4 border-t ${
+          theme === 'dark' ? 'border-[#27272a]' : 'border-gray-200'
+        }`}>
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`w-full px-4 py-2 mb-2 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors ${
+              theme === 'dark'
+                ? 'bg-[#27272a] text-zinc-300 hover:bg-[#3f3f46]'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === 'dark' ? 'Açık Mod' : 'Koyu Mod'}
+          </button>
           <button
             onClick={toggleLanguage}
-            className="w-full px-4 py-2 mb-2 text-sm bg-[#27272a] text-zinc-300 rounded-lg hover:bg-[#3f3f46] transition-colors"
+            className={`w-full px-4 py-2 mb-2 text-sm rounded-lg transition-colors ${
+              theme === 'dark'
+                ? 'bg-[#27272a] text-zinc-300 hover:bg-[#3f3f46]'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
             {i18n.language === 'tr' ? 'English' : 'Türkçe'}
           </button>
@@ -242,6 +264,9 @@ const AdminPage = () => {
             <LogOut className="w-5 h-5" />
             <span className="font-medium">{t('nav.logout')}</span>
           </button>
+          <p className={`text-center text-xs mt-2 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}>
+            v{APP_VERSION}
+          </p>
         </div>
       </aside>
 
