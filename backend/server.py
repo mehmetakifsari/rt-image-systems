@@ -1149,8 +1149,167 @@ async def get_version():
         "version": APP_VERSION,
         "date": VERSION_DATE,
         "build": BUILD_NUMBER,
-        "fullVersion": f"v{APP_VERSION} ({BUILD_NUMBER})"
+        "fullVersion": f"v{APP_VERSION} ({BUILD_NUMBER})",
+        "api_version": API_VERSION
     }
+
+# ============ OCR API ============
+
+@api_router.post("/ocr/detect-text")
+async def ocr_detect_text(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Resimden metin algılama (Google Vision API)"""
+    try:
+        from services.ocr_service import get_ocr_service
+        
+        ocr = get_ocr_service()
+        if not ocr:
+            return {"success": False, "error": "OCR not configured", "use_browser": True}
+        
+        content = await file.read()
+        result = await ocr.detect_text(content)
+        return result
+    except ImportError:
+        return {"success": False, "error": "OCR service not available", "use_browser": True}
+    except Exception as e:
+        logger.error(f"OCR error: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/ocr/detect-plate")
+async def ocr_detect_plate(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Resimden plaka algılama (Google Vision API)"""
+    try:
+        from services.ocr_service import get_ocr_service
+        
+        ocr = get_ocr_service()
+        if not ocr:
+            return {"success": False, "error": "OCR not configured", "use_browser": True}
+        
+        content = await file.read()
+        result = await ocr.detect_license_plate(content)
+        return result
+    except ImportError:
+        return {"success": False, "error": "OCR service not available", "use_browser": True}
+    except Exception as e:
+        logger.error(f"OCR plate error: {e}")
+        return {"success": False, "error": str(e)}
+
+# ============ VOICE-TO-TEXT API ============
+
+@api_router.post("/voice/transcribe")
+async def voice_transcribe(
+    file: UploadFile = File(...),
+    language: str = Form("tr"),
+    provider: str = Form("openai"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Ses kaydını metne dönüştür (OpenAI Whisper / Gemini)"""
+    try:
+        from services.voice_service import get_voice_service
+        
+        voice = get_voice_service(provider)
+        if not voice:
+            return {"success": False, "error": "Voice service not configured", "use_browser": True}
+        
+        content = await file.read()
+        result = await voice.transcribe_audio(content, language)
+        return result
+    except ImportError:
+        return {"success": False, "error": "Voice service not available", "use_browser": True}
+    except Exception as e:
+        logger.error(f"Voice transcription error: {e}")
+        return {"success": False, "error": str(e)}
+
+# ============ STORAGE API ============
+
+@api_router.get("/storage/providers")
+async def get_storage_providers(current_user: dict = Depends(get_current_user)):
+    """Yapılandırılmış depolama sağlayıcılarını listele"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    try:
+        from services.storage_service import storage_manager
+        return {
+            "providers": storage_manager.get_configured_providers(),
+            "active": storage_manager.active_provider
+        }
+    except ImportError:
+        return {
+            "providers": {"local": True},
+            "active": "local"
+        }
+
+@api_router.post("/storage/set-provider")
+async def set_storage_provider(
+    provider: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Aktif depolama sağlayıcısını değiştir"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    try:
+        from services.storage_service import storage_manager
+        
+        if storage_manager.set_active_provider(provider):
+            # Ayarları veritabanına kaydet
+            await db.settings.update_one(
+                {"key": "storage_provider"},
+                {"$set": {"value": provider}},
+                upsert=True
+            )
+            return {"success": True, "active": provider}
+        return {"success": False, "error": "Provider not configured"}
+    except ImportError:
+        return {"success": False, "error": "Storage service not available"}
+
+# ============ SERVICE STATUS API (for admin) ============
+
+@api_router.get("/services/status")
+async def get_services_status(current_user: dict = Depends(get_current_user)):
+    """Tüm servislerin durumunu getir"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    status = {
+        "ocr": {"configured": False, "provider": "browser"},
+        "voice": {"configured": False, "provider": "browser"},
+        "storage": {"configured": True, "provider": "local", "providers": {"local": True}}
+    }
+    
+    try:
+        from services.ocr_service import get_ocr_service
+        ocr = get_ocr_service()
+        if ocr:
+            status["ocr"] = {"configured": True, "provider": "vision_api"}
+    except:
+        pass
+    
+    try:
+        from services.voice_service import get_voice_service
+        voice = get_voice_service()
+        if voice and voice.is_configured():
+            status["voice"] = {"configured": True, "provider": "openai_whisper"}
+    except:
+        pass
+    
+    try:
+        from services.storage_service import storage_manager
+        status["storage"] = {
+            "configured": True,
+            "provider": storage_manager.active_provider,
+            "providers": storage_manager.get_configured_providers()
+        }
+    except:
+        pass
+    
+    return status
 
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
