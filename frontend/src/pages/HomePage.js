@@ -302,10 +302,12 @@ const HomePage = () => {
           </div>
         ) : records.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-[#18181b] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Truck className="w-8 h-8 text-zinc-600" />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+              theme === 'dark' ? 'bg-[#18181b]' : 'bg-gray-100'
+            }`}>
+              <Truck className={`w-8 h-8 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`} />
             </div>
-            <p className="text-zinc-500">{t('misc.noRecords')}</p>
+            <p className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>{t('misc.noRecords')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -318,7 +320,11 @@ const HomePage = () => {
                 <button
                   key={record.id}
                   onClick={() => navigate(`/record/${record.id}`)}
-                  className="w-full record-card p-4 text-left group"
+                  className={`w-full p-4 text-left group rounded-xl border transition-all ${
+                    theme === 'dark'
+                      ? 'bg-[#18181b] border-[#27272a] hover:border-[#FACC15]/50'
+                      : 'bg-white border-gray-200 hover:border-[#FACC15]'
+                  }`}
                   data-testid={`record-card-${record.id}`}
                 >
                   <div className="flex items-start gap-3">
@@ -334,10 +340,10 @@ const HomePage = () => {
                           {t(`record.${record.record_type}`)}
                         </span>
                       </div>
-                      <h3 className="text-white font-semibold truncate">
+                      <h3 className={`font-semibold truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {getRecordTitle(record)}
                       </h3>
-                      <p className="text-zinc-500 text-sm truncate">
+                      <p className={`text-sm truncate ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
                         {getRecordSubtitle(record)}
                       </p>
                       
@@ -345,19 +351,25 @@ const HomePage = () => {
                       {(mediaCounts.photo > 0 || mediaCounts.video > 0 || mediaCounts.pdf > 0) && (
                         <div className="flex items-center gap-3 mt-2">
                           {mediaCounts.photo > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-zinc-500">
+                            <span className={`flex items-center gap-1 text-xs ${
+                              theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                            }`}>
                               <Image className="w-3.5 h-3.5" />
                               {mediaCounts.photo}
                             </span>
                           )}
                           {mediaCounts.video > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-zinc-500">
+                            <span className={`flex items-center gap-1 text-xs ${
+                              theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                            }`}>
                               <Video className="w-3.5 h-3.5" />
                               {mediaCounts.video}
                             </span>
                           )}
                           {mediaCounts.pdf > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-zinc-500">
+                            <span className={`flex items-center gap-1 text-xs ${
+                              theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                            }`}>
                               <FileText className="w-3.5 h-3.5" />
                               {mediaCounts.pdf}
                             </span>
@@ -367,7 +379,11 @@ const HomePage = () => {
                     </div>
                     
                     {/* Arrow */}
-                    <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-[#FACC15] transition-colors flex-shrink-0" />
+                    <ChevronRight className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                      theme === 'dark' 
+                        ? 'text-zinc-600 group-hover:text-[#FACC15]' 
+                        : 'text-gray-400 group-hover:text-[#FACC15]'
+                    }`} />
                   </div>
                 </button>
               );
