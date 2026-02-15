@@ -3,16 +3,16 @@
 ## Proje Özeti
 Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF Kayıt Sistemi.
 
-## Tarih
+## Versiyon: 1.2.0
 - İlk Oluşturulma: 2026-02-15
-- Son Güncelleme: 2026-02-15
+- Son Güncelleme: 2026-12-15
 
 ## Kullanıcı Profilleri
 1. **Admin**: Tüm şubeleri ve personeli yöneten sistem yöneticisi
-2. **Garanti Danışmanı**: Şube bazlı garanti kayıtları oluşturan personel
-3. **Hasar Danışmanı**: Şube bazlı hasar kayıtları oluşturan personel
-4. **Müşteri Kabul Personeli**: Şube bazlı müşteri kabul işlemleri yapan personel
-5. **Usta/Stajyer** (Sonraki aşama): Veri yükleyen saha çalışanı
+2. **Garanti Danışmanı (Staff)**: Şube bazlı garanti kayıtları oluşturan personel
+3. **Hasar Danışmanı (Staff)**: Şube bazlı hasar kayıtları oluşturan personel
+4. **Müşteri Kabul Personeli (Staff)**: Şube bazlı müşteri kabul işlemleri yapan personel
+5. **Stajyer/Çırak (Apprentice)**: Kayıt oluşturan, danışman onayı bekleyen saha çalışanı
 
 ## Şube Yapısı
 | Kod | Şube | Şehir |
@@ -35,20 +35,16 @@ Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF K
 - **Damaged**: Hasarlı araç (Referans No + Şube zorunlu)
 - **PDI**: Sıfır araç teslim öncesi (VIN + Şube zorunlu)
 
-### Özellikler
-- WhatsApp benzeri sohbet arayüzü
-- Fotoğraf, video, PDF yükleme
-- Plaka OCR (Tesseract.js)
-- Sesli not alma (Web Speech API)
-- Offline queue desteği (IndexedDB)
-- Türkçe/İngilizce çoklu dil
-- Şube bazlı veri yönetimi
-- Personel yönetimi (Admin)
+### Kayıt Durumları (Status)
+- **active**: Normal/Aktif kayıt
+- **pending_review**: Stajyer tarafından oluşturuldu, danışman onayı bekliyor
+- **approved**: Danışman tarafından onaylandı
+- **rejected**: Danışman tarafından reddedildi
 
-## Uygulanan Özellikler
+## Tamamlanan Özellikler v1.2.0
 
-### Backend (FastAPI + MongoDB)
-- [x] JWT kimlik doğrulama
+### Temel Sistem
+- [x] JWT kimlik doğrulama (Admin, Staff, Apprentice)
 - [x] Şube sistemi (5 şube)
 - [x] Personel yönetimi (staff CRUD)
 - [x] Şube bazlı veri filtreleme
@@ -56,61 +52,95 @@ Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF K
 - [x] Rol bazlı erişim kontrolü
 - [x] 4 kayıt türü için CRUD API'ları
 - [x] Dosya yükleme (fotoğraf, video, PDF)
-- [x] Ayarlar API'ı (OCR, depolama, dil)
-- [x] Dashboard istatistikleri (şube bazlı)
+
+### v1.2.0 Yeni Özellikler
+- [x] **Landing Page**: Herkese açık tanıtım sayfası (/welcome)
+- [x] **Dark/Light Mode**: Tema değiştirme (localStorage'da saklanır)
+- [x] **Versiyon Sistemi**: /api/version endpoint'i ve UI'da gösterim
+- [x] **Stajyer/Çırak Hesapları**: Yeni kullanıcı rolü
+- [x] **Onay İş Akışı**: Stajyer kayıtları pending_review olarak başlar
+- [x] **Bildirim Sistemi**: Kayıt oluşturma/onay/ret bildirimleri
+- [x] **Admin Panel Sekmeleri**: Dashboard, Kayıtlar, Bekleyen Kayıtlar, Personel, Stajyerler, Ayarlar
 
 ### Frontend (React + Tailwind)
-- [x] Koyu tema tasarım (Renault Trucks kurumsal)
-- [x] Login sayfası
+- [x] Koyu/Açık tema tasarım
+- [x] Login sayfası (tema toggle)
+- [x] Landing page (özellikler, şubeler, CTA)
 - [x] Ana sayfa (kayıt listesi, arama, filtreleme)
-- [x] Kullanıcı menüsü (profil, logout)
+- [x] Bildirim çanı (NotificationBell)
+- [x] Kullanıcı menüsü (profil, logout, versiyon)
 - [x] Yeni kayıt oluşturma (4 tip seçimi + şube)
 - [x] Kayıt detay sayfası (WhatsApp benzeri)
 - [x] Plaka OCR modal (Tesseract.js)
 - [x] Sesli not alma (Web Speech API)
-- [x] Admin dashboard (şube bazlı)
-- [x] Personel yönetimi
-- [x] WhatsApp kısayolu (personel kartlarında)
-- [x] Logout fonksiyonu
+- [x] Admin dashboard (şube bazlı istatistikler)
+- [x] Bekleyen kayıtlar sekmesi (onay/ret)
+- [x] Personel yönetimi (staff + apprentice)
+- [x] Stajyer yönetimi sekmesi
 
-### Admin Ayarları
-- [x] OCR Sağlayıcı: Tarayıcı (Tesseract.js), Vision API
-- [x] Depolama: Yerel, FTP, AWS S3, Google Drive, OneDrive
-- [x] Dil: Türkçe, İngilizce
+### Backend API'ları
+- [x] /api/version - Versiyon bilgisi
+- [x] /api/auth/login - Giriş
+- [x] /api/auth/register - Kayıt (Admin)
+- [x] /api/records - Kayıt CRUD
+- [x] /api/records/pending - Bekleyen kayıtlar
+- [x] /api/records/{id}/approve - Kayıt onaylama
+- [x] /api/records/{id}/reject - Kayıt reddetme
+- [x] /api/notifications - Bildirimler
+- [x] /api/notifications/read-all - Tümünü okundu işaretle
+- [x] /api/staff - Personel listesi
+- [x] /api/apprentices - Stajyer listesi
+- [x] /api/stats - Dashboard istatistikleri
+- [x] /api/settings - Ayarlar
 
 ## Demo Hesaplar
 - **Admin**: admin / admin123
 - **Staff**: hadimkoy_garanti / test123
+- **Stajyer**: test_stajyer / test123
+
+## MOCKED (Henüz Gerçek Entegrasyon Yok)
+⚠️ Aşağıdaki özellikler UI'da mevcuttur ancak backend entegrasyonu yapılmamıştır:
+- Google Vision API (OCR)
+- AWS S3 Depolama
+- FTP Depolama
+- Google Drive Depolama
+- OneDrive Depolama
+- Gemini/OpenAI Voice-to-Text
 
 ## Öncelikli Backlog
 
-### P0 (Kritik) ✅
+### P0 (Kritik) ✅ TAMAMLANDI
 - [x] Şube sistemi
 - [x] Personel yönetimi
 - [x] Şube bazlı veri filtreleme
 - [x] İş emrinden şube algılama
+- [x] Landing page
+- [x] Dark/Light mode
+- [x] Versiyon sistemi
+- [x] Stajyer hesapları
+- [x] Bildirim sistemi
 
 ### P1 (Yüksek)
-- [ ] Usta/Stajyer hesapları
-- [ ] Bildirim sistemi (eksik evrak, istek)
-- [ ] Bulut depolama entegrasyonları
+- [ ] Yıla göre aynı iş emri numarası sorunu (tarihe göre sıralama)
+- [ ] Mobil API versiyonlama (/api/v1/...)
+- [ ] Bulut depolama entegrasyonları (S3, GDrive)
 
 ### P2 (Orta)
 - [ ] Google Vision API entegrasyonu
+- [ ] Gemini/OpenAI Voice-to-Text entegrasyonu
 - [ ] Gelişmiş raporlama ve export
-- [ ] Native mobil uygulama
-
-## Sonraki Aşama (Usta/Stajyer)
-1. Usta/Stajyer hesap oluşturma
-2. Veri yükleme sonrası danışmana bildirim
-3. Eksik evrak bildirimi
-4. İstek bildirimi (ek görsel gerekli vb.)
+- [ ] Native mobil uygulama (Android/iOS)
 
 ## Teknik Mimari
-- **Frontend**: React 19, Tailwind CSS, Radix UI
+- **Frontend**: React 19, Tailwind CSS, Radix UI, Shadcn/UI
 - **Backend**: FastAPI, Motor (async MongoDB)
 - **Veritabanı**: MongoDB
 - **Dosya Depolama**: Yerel (uploads klasörü)
 - **Auth**: JWT
 - **OCR**: Tesseract.js (tarayıcı içi)
 - **Ses**: Web Speech API
+
+## Test Raporları
+- /app/test_reports/iteration_1.json
+- /app/test_reports/iteration_2.json
+- /app/test_reports/iteration_3.json (v1.2.0 - Tüm testler geçti)
