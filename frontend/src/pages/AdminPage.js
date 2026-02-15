@@ -1240,21 +1240,24 @@ const StaffModal = ({ staff, onClose, onSave }) => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2">
-              {t('job.select')} *
-            </label>
-            <select
-              value={formData.job_title}
-              onChange={(e) => setFormData(prev => ({ ...prev, job_title: e.target.value }))}
-              className="w-full h-11 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white"
-            >
-              <option value="">{t('job.select')}</option>
-              {JOB_TITLES.map(j => (
-                <option key={j.code} value={j.code}>{j.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Görev seçimi - sadece staff için */}
+          {!isApprentice && (
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                {t('job.select')} *
+              </label>
+              <select
+                value={formData.job_title}
+                onChange={(e) => setFormData(prev => ({ ...prev, job_title: e.target.value }))}
+                className="w-full h-11 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white"
+              >
+                <option value="">{t('job.select')}</option>
+                {JOB_TITLES.filter(j => j.code !== 'stajyer').map(j => (
+                  <option key={j.code} value={j.code}>{j.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">
