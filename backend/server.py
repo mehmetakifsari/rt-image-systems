@@ -423,12 +423,17 @@ async def update_profile(update: UserUpdate, current_user: dict = Depends(get_cu
 @api_router.get("/staff", response_model=List[UserResponse])
 async def get_staff(
     branch_code: Optional[str] = None,
+    include_apprentices: bool = False,
     current_user: dict = Depends(get_current_user)
 ):
     if current_user.get('role') != 'admin':
         raise HTTPException(status_code=403, detail="Yetkiniz yok")
     
-    query = {"role": "staff"}
+    roles = ["staff"]
+    if include_apprentices:
+        roles.append("apprentice")
+    
+    query = {"role": {"$in": roles}}
     if branch_code:
         query["branch_code"] = branch_code
     
