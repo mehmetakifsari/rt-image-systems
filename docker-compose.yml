@@ -8,8 +8,8 @@ services:
       args:
         REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-}
         REACT_APP_GA_MEASUREMENT_ID: ${REACT_APP_GA_MEASUREMENT_ID:-}
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     environment:
       - MONGO_URL=${MONGO_URL}
       - DB_NAME=${DB_NAME:-renault_garanti}
@@ -24,7 +24,8 @@ services:
     volumes:
       - uploads_data:/app/backend/uploads
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
