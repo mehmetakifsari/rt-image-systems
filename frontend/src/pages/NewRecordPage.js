@@ -340,19 +340,119 @@ const NewRecordPage = () => {
               </div>
             )}
 
-            {/* Note field */}
+            {/* Note field with Voice Input */}
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">
-                {t('field.note')} <span className="text-zinc-600">({t('field.optional')})</span>
+              <label className="flex items-center justify-between text-sm font-medium text-zinc-400 mb-2">
+                <span>{t('field.note')} <span className="text-zinc-600">({t('field.optional')})</span></span>
+                {voiceSupported && (
+                  <span className="text-xs text-[#FACC15]">Sesle yazabilirsiniz</span>
+                )}
               </label>
-              <textarea
-                value={formData.note}
-                onChange={(e) => handleInputChange('note', e.target.value)}
-                placeholder="Ek notlar..."
-                rows={3}
-                className="w-full px-4 py-3 bg-[#18181b] border border-[#27272a] rounded-lg text-white placeholder-zinc-500 resize-none"
-                data-testid="note-input"
-              />
+              <div className="relative">
+                <textarea
+                  value={formData.note}
+                  onChange={(e) => handleInputChange('note', e.target.value)}
+                  placeholder="Ek notlar... (veya mikrofon ile konuşun)"
+                  rows={4}
+                  className="w-full px-4 py-3 pr-20 bg-[#18181b] border border-[#27272a] rounded-lg text-white placeholder-zinc-500 resize-none"
+                  data-testid="note-input"
+                />
+                
+                {/* Voice Input Buttons */}
+                <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                  {/* Recording indicator */}
+                  {(isListening || isRecording) && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-red-500/20 rounded-lg mr-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      <span className="text-xs text-red-400">
+                        {isRecording ? 'Kaydediliyor...' : 'Dinleniyor...'}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {isTranscribing && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-[#FACC15]/20 rounded-lg mr-1">
+                      <Loader2 className="w-3 h-3 text-[#FACC15] animate-spin" />
+                      <span className="text-xs text-[#FACC15]">Dönüştürülüyor...</span>
+                    </div>
+                  )}
+                  
+                  {/* Browser Voice (Web Speech API) */}
+                  {voiceSupported && !isRecording && !isTranscribing && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isListening) {
+                          stopListening();
+                          // Append transcript to note
+                          if (transcript) {
+                            setFormData(prev => ({
+                              ...prev,
+                              note: prev.note + (prev.note ? ' ' : '') + transcript
+                            }));
+                            resetTranscript();
+                          }
+                        } else {
+                          resetTranscript();
+                          startListening('tr-TR');
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isListening 
+                          ? 'bg-red-500 text-white' 
+                          : 'bg-[#27272a] text-zinc-400 hover:text-white hover:bg-[#3f3f46]'
+                      }`}
+                      title={isListening ? 'Durdur' : 'Sesle yaz (Tarayıcı)'}
+                      data-testid="voice-browser-button"
+                    >
+                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </button>
+                  )}
+                  
+                  {/* Server Voice (OpenAI Whisper) */}
+                  {!isListening && !isTranscribing && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (isRecording) {
+                          const result = await stopRecordingAndTranscribe('tr', 'openai');
+                          if (result.success) {
+                            setFormData(prev => ({
+                              ...prev,
+                              note: prev.note + (prev.note ? ' ' : '') + result.text
+                            }));
+                            resetTranscript();
+                            toast.success('Ses metne dönüştürüldü');
+                          } else if (result.useBrowser) {
+                            toast.info('Sunucu yapılandırılmamış, tarayıcı kullanın');
+                          }
+                        } else {
+                          await startRecording();
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isRecording 
+                          ? 'bg-[#FACC15] text-black animate-pulse' 
+                          : 'bg-[#FACC15]/20 text-[#FACC15] hover:bg-[#FACC15]/30'
+                      }`}
+                      title={isRecording ? 'Kaydetmeyi bitir' : 'Sesle yaz (AI - Whisper)'}
+                      data-testid="voice-server-button"
+                    >
+                      {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Live transcript preview */}
+              {(isListening || transcript) && (
+                <div className="mt-2 p-2 bg-[#27272a]/50 rounded-lg">
+                  <p className="text-xs text-zinc-500 mb-1">Canlı transkript:</p>
+                  <p className="text-sm text-zinc-300 italic">
+                    {transcript || '...'}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Submit button */}
