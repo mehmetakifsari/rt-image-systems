@@ -82,11 +82,20 @@ const AdminPage = () => {
         params.append('limit', '50');
         const response = await axios.get(`${API}/records?${params}`);
         setRecords(response.data);
+      } else if (activeTab === 'pending') {
+        const response = await axios.get(`${API}/records/pending`);
+        setPendingRecords(response.data);
       } else if (activeTab === 'staff') {
         const params = new URLSearchParams();
         if (filterBranch) params.append('branch_code', filterBranch);
+        params.append('include_apprentices', 'true');
         const response = await axios.get(`${API}/staff?${params}`);
         setStaff(response.data);
+      } else if (activeTab === 'apprentices') {
+        const params = new URLSearchParams();
+        if (filterBranch) params.append('branch_code', filterBranch);
+        const response = await axios.get(`${API}/apprentices?${params}`);
+        setApprentices(response.data);
       } else if (activeTab === 'settings') {
         const response = await axios.get(`${API}/settings`);
         setSettings(response.data);
@@ -134,6 +143,28 @@ const AdminPage = () => {
     }
   };
 
+  const handleApproveRecord = async (recordId) => {
+    try {
+      await axios.put(`${API}/records/${recordId}/approve`);
+      toast.success('Kayıt onaylandı');
+      fetchData();
+    } catch (error) {
+      toast.error('Hata oluştu');
+    }
+  };
+
+  const handleRejectRecord = async (recordId, reason) => {
+    try {
+      const formData = new FormData();
+      formData.append('reason', reason);
+      await axios.put(`${API}/records/${recordId}/reject`, formData);
+      toast.success('Kayıt reddedildi');
+      fetchData();
+    } catch (error) {
+      toast.error('Hata oluştu');
+    }
+  };
+
   const RECORD_TYPE_ICONS = {
     standard: Wrench,
     roadassist: Truck,
@@ -151,7 +182,9 @@ const AdminPage = () => {
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('admin.dashboard') },
     { id: 'records', icon: FileText, label: t('admin.records') },
+    { id: 'pending', icon: Clock, label: 'Bekleyen Kayıtlar', badge: true },
     { id: 'staff', icon: Users, label: t('admin.staff') },
+    { id: 'apprentices', icon: GraduationCap, label: 'Stajyerler' },
     { id: 'settings', icon: Settings, label: t('admin.settings') }
   ];
 
