@@ -3,9 +3,10 @@
 ## Proje Özeti
 Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF Kayıt Sistemi.
 
-## Versiyon: 1.2.0
+## Versiyon: 1.3.0
 - İlk Oluşturulma: 2026-02-15
 - Son Güncelleme: 2026-12-15
+- API Version: v1
 
 ## Kullanıcı Profilleri
 1. **Admin**: Tüm şubeleri ve personeli yöneten sistem yöneticisi
@@ -23,124 +24,122 @@ Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF K
 | 4 | Hadımköy | İstanbul |
 | 5 | Keşan | Edirne |
 
-## İş Emri Formatı
-`40216001` = 4(Şube) + 02(Ay) + 16(Gün) + 001(Sıra)
-- İş emri numarasının ilk rakamı şube kodunu belirler
-- Standart kayıtlarda iş emrinden şube otomatik algılanır
+## Tamamlanan Özellikler v1.3.0
 
-## Temel Gereksinimler
-### Kayıt Türleri
-- **Standard**: Garanti/standart servis (Plaka + İş Emri zorunlu)
-- **RoadAssist**: Yol yardım (Plaka + Şube zorunlu)
-- **Damaged**: Hasarlı araç (Referans No + Şube zorunlu)
-- **PDI**: Sıfır araç teslim öncesi (VIN + Şube zorunlu)
+### v1.3.0 Yeni Özellikler (P1 + P2)
+- [x] **AWS S3 Depolama** - Dosya yükleme/indirme (API key gerekli)
+- [x] **Google Drive Depolama** - Bulut depolama (OAuth gerekli)
+- [x] **FTP Depolama** - Harici FTP sunucu desteği
+- [x] **OneDrive Depolama** - Microsoft bulut desteği
+- [x] **Google Vision OCR** - Plaka ve metin tanıma (API key gerekli)
+- [x] **OpenAI Whisper Voice-to-Text** - Ses transkripsiyonu (Emergent LLM Key)
+- [x] **API Versiyonlama** - /api/version endpoint'i api_version döndürür
+- [x] **Yıla Göre Filtreleme** - Aynı iş emri numarası farklı yıllarda
+- [x] **Gelişmiş Sıralama** - sort_by ve sort_order parametreleri
+- [x] **Servis Durumu API** - /api/services/status endpoint'i
 
-### Kayıt Durumları (Status)
-- **active**: Normal/Aktif kayıt
-- **pending_review**: Stajyer tarafından oluşturuldu, danışman onayı bekliyor
-- **approved**: Danışman tarafından onaylandı
-- **rejected**: Danışman tarafından reddedildi
+### v1.2.0 Özellikler
+- [x] **Landing Page** - Herkese açık tanıtım sayfası (/welcome)
+- [x] **Dark/Light Mode** - Tema değiştirme
+- [x] **Versiyon Sistemi** - Uygulama versiyonu gösterimi
+- [x] **Stajyer/Çırak Hesapları** - Yeni kullanıcı rolü
+- [x] **Onay İş Akışı** - pending_review durumu
+- [x] **Bildirim Sistemi** - Kayıt bildirimleri
 
-## Tamamlanan Özellikler v1.2.0
-
-### Temel Sistem
-- [x] JWT kimlik doğrulama (Admin, Staff, Apprentice)
+### Temel Sistem (v1.0-1.1)
+- [x] JWT kimlik doğrulama
 - [x] Şube sistemi (5 şube)
-- [x] Personel yönetimi (staff CRUD)
+- [x] Personel yönetimi
 - [x] Şube bazlı veri filtreleme
 - [x] İş emrinden şube algılama
-- [x] Rol bazlı erişim kontrolü
-- [x] 4 kayıt türü için CRUD API'ları
+- [x] 4 kayıt türü (Standard, RoadAssist, Damaged, PDI)
 - [x] Dosya yükleme (fotoğraf, video, PDF)
 
-### v1.2.0 Yeni Özellikler
-- [x] **Landing Page**: Herkese açık tanıtım sayfası (/welcome)
-- [x] **Dark/Light Mode**: Tema değiştirme (localStorage'da saklanır)
-- [x] **Versiyon Sistemi**: /api/version endpoint'i ve UI'da gösterim
-- [x] **Stajyer/Çırak Hesapları**: Yeni kullanıcı rolü
-- [x] **Onay İş Akışı**: Stajyer kayıtları pending_review olarak başlar
-- [x] **Bildirim Sistemi**: Kayıt oluşturma/onay/ret bildirimleri
-- [x] **Admin Panel Sekmeleri**: Dashboard, Kayıtlar, Bekleyen Kayıtlar, Personel, Stajyerler, Ayarlar
+## Backend API Endpoint'leri
 
-### Frontend (React + Tailwind)
-- [x] Koyu/Açık tema tasarım
-- [x] Login sayfası (tema toggle)
-- [x] Landing page (özellikler, şubeler, CTA)
-- [x] Ana sayfa (kayıt listesi, arama, filtreleme)
-- [x] Bildirim çanı (NotificationBell)
-- [x] Kullanıcı menüsü (profil, logout, versiyon)
-- [x] Yeni kayıt oluşturma (4 tip seçimi + şube)
-- [x] Kayıt detay sayfası (WhatsApp benzeri)
-- [x] Plaka OCR modal (Tesseract.js)
-- [x] Sesli not alma (Web Speech API)
-- [x] Admin dashboard (şube bazlı istatistikler)
-- [x] Bekleyen kayıtlar sekmesi (onay/ret)
-- [x] Personel yönetimi (staff + apprentice)
-- [x] Stajyer yönetimi sekmesi
+### Temel
+- `GET /api/` - Health check
+- `GET /api/version` - Versiyon bilgisi (api_version dahil)
 
-### Backend API'ları
-- [x] /api/version - Versiyon bilgisi
-- [x] /api/auth/login - Giriş
-- [x] /api/auth/register - Kayıt (Admin)
-- [x] /api/records - Kayıt CRUD
-- [x] /api/records/pending - Bekleyen kayıtlar
-- [x] /api/records/{id}/approve - Kayıt onaylama
-- [x] /api/records/{id}/reject - Kayıt reddetme
-- [x] /api/notifications - Bildirimler
-- [x] /api/notifications/read-all - Tümünü okundu işaretle
-- [x] /api/staff - Personel listesi
-- [x] /api/apprentices - Stajyer listesi
-- [x] /api/stats - Dashboard istatistikleri
-- [x] /api/settings - Ayarlar
+### Kimlik Doğrulama
+- `POST /api/auth/login` - Giriş
+- `POST /api/auth/register` - Kayıt (Admin)
+
+### Kayıtlar
+- `GET /api/records` - Kayıt listesi (year, sort_by, sort_order parametreleri)
+- `GET /api/records/pending` - Bekleyen kayıtlar
+- `POST /api/records` - Yeni kayıt
+- `GET /api/records/{id}` - Kayıt detay
+- `PUT /api/records/{id}` - Kayıt güncelle
+- `PUT /api/records/{id}/approve` - Kayıt onayla
+- `PUT /api/records/{id}/reject` - Kayıt reddet
+
+### Bildirimler
+- `GET /api/notifications` - Bildirim listesi
+- `POST /api/notifications` - Bildirim gönder
+- `PUT /api/notifications/read-all` - Tümünü okundu işaretle
+
+### Servisler (v1.3.0)
+- `GET /api/services/status` - Servis durumları (Admin)
+- `GET /api/storage/providers` - Depolama sağlayıcıları (Admin)
+- `POST /api/storage/set-provider` - Aktif depolama değiştir (Admin)
+- `POST /api/ocr/detect-text` - Metin algılama
+- `POST /api/ocr/detect-plate` - Plaka algılama
+- `POST /api/voice/transcribe` - Ses transkripsiyonu
+
+## Environment Variables (Panelden Ayarlanacak)
+
+### Depolama
+```
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=eu-central-1
+S3_BUCKET_NAME=
+GOOGLE_DRIVE_CREDENTIALS=
+GOOGLE_DRIVE_FOLDER_ID=
+FTP_HOST=
+FTP_USER=
+FTP_PASSWORD=
+ONEDRIVE_CLIENT_ID=
+ONEDRIVE_CLIENT_SECRET=
+```
+
+### Servisler
+```
+GOOGLE_VISION_API_KEY=
+LLM_API_KEY=  # Emergent Universal Key (OpenAI Whisper için)
+```
 
 ## Demo Hesaplar
 - **Admin**: admin / admin123
 - **Staff**: hadimkoy_garanti / test123
 - **Stajyer**: test_stajyer / test123
 
-## MOCKED (Henüz Gerçek Entegrasyon Yok)
-⚠️ Aşağıdaki özellikler UI'da mevcuttur ancak backend entegrasyonu yapılmamıştır:
-- Google Vision API (OCR)
-- AWS S3 Depolama
-- FTP Depolama
-- Google Drive Depolama
-- OneDrive Depolama
-- Gemini/OpenAI Voice-to-Text
-
-## Öncelikli Backlog
-
-### P0 (Kritik) ✅ TAMAMLANDI
-- [x] Şube sistemi
-- [x] Personel yönetimi
-- [x] Şube bazlı veri filtreleme
-- [x] İş emrinden şube algılama
-- [x] Landing page
-- [x] Dark/Light mode
-- [x] Versiyon sistemi
-- [x] Stajyer hesapları
-- [x] Bildirim sistemi
-
-### P1 (Yüksek)
-- [ ] Yıla göre aynı iş emri numarası sorunu (tarihe göre sıralama)
-- [ ] Mobil API versiyonlama (/api/v1/...)
-- [ ] Bulut depolama entegrasyonları (S3, GDrive)
-
-### P2 (Orta)
-- [ ] Google Vision API entegrasyonu
-- [ ] Gemini/OpenAI Voice-to-Text entegrasyonu
-- [ ] Gelişmiş raporlama ve export
-- [ ] Native mobil uygulama (Android/iOS)
-
-## Teknik Mimari
-- **Frontend**: React 19, Tailwind CSS, Radix UI, Shadcn/UI
-- **Backend**: FastAPI, Motor (async MongoDB)
-- **Veritabanı**: MongoDB
-- **Dosya Depolama**: Yerel (uploads klasörü)
-- **Auth**: JWT
-- **OCR**: Tesseract.js (tarayıcı içi)
-- **Ses**: Web Speech API
-
 ## Test Raporları
 - /app/test_reports/iteration_1.json
 - /app/test_reports/iteration_2.json
-- /app/test_reports/iteration_3.json (v1.2.0 - Tüm testler geçti)
+- /app/test_reports/iteration_3.json (v1.2.0)
+- /app/test_reports/iteration_4.json (v1.3.0 - 23 test geçti)
+
+## Backlog
+
+### P0-P1 ✅ TAMAMLANDI
+Tüm kritik ve yüksek öncelikli görevler tamamlandı.
+
+### P2 (Kalan)
+- [ ] Native mobil uygulama (Android/iOS)
+- [ ] Gelişmiş raporlama ve export (PDF/Excel)
+- [ ] WhatsApp entegrasyonu (bildirimler için)
+- [ ] Fotoğraf kalitesi kontrolü (AI ile)
+
+## GitHub Repo
+Projeyi GitHub'a kaydetmek için chat arayüzündeki **"Save to Github"** butonunu kullanın.
+
+## Teknik Mimari
+- **Frontend**: React 19, Tailwind CSS, Shadcn/UI
+- **Backend**: FastAPI, Motor (async MongoDB)
+- **Veritabanı**: MongoDB
+- **Dosya Depolama**: Local / S3 / Google Drive / FTP / OneDrive
+- **Auth**: JWT
+- **OCR**: Tesseract.js (tarayıcı) / Google Vision API (sunucu)
+- **Voice**: Web Speech API (tarayıcı) / OpenAI Whisper (sunucu)
