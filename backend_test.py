@@ -146,7 +146,8 @@ class RenaultTrucksAPITester:
         try:
             data = {
                 "record_type": "roadassist",
-                "plate": "06HELP456"
+                "plate": "06HELP456",
+                "branch_code": "4"  # Required for RoadAssist records
             }
             headers = {"Authorization": f"Bearer {self.admin_token}"}
             response = requests.post(f"{self.base_url}/records", json=data, headers=headers)
@@ -175,7 +176,8 @@ class RenaultTrucksAPITester:
         try:
             data = {
                 "record_type": "damaged",
-                "reference_no": "DMG-2024-001"
+                "reference_no": "DMG-2024-001",
+                "branch_code": "4"  # Required for Damaged records
             }
             headers = {"Authorization": f"Bearer {self.admin_token}"}
             response = requests.post(f"{self.base_url}/records", json=data, headers=headers)
@@ -204,7 +206,8 @@ class RenaultTrucksAPITester:
         try:
             data = {
                 "record_type": "pdi",
-                "vin": "VF1TESTVIN1234567"
+                "vin": "VF1TESTVIN1234567",
+                "branch_code": "4"  # Required for PDI records
             }
             headers = {"Authorization": f"Bearer {self.admin_token}"}
             response = requests.post(f"{self.base_url}/records", json=data, headers=headers)
