@@ -3,9 +3,9 @@
 ## Proje Özeti
 Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF Kayıt Sistemi.
 
-## Versiyon: 1.3.0
+## Versiyon: 1.4.0
 - İlk Oluşturulma: 2026-02-15
-- Son Güncelleme: 2026-12-15
+- Son Güncelleme: 2026-02-15
 - API Version: v1
 
 ## Kullanıcı Profilleri
@@ -24,9 +24,17 @@ Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF K
 | 4 | Hadımköy | İstanbul |
 | 5 | Keşan | Edirne |
 
-## Tamamlanan Özellikler v1.3.0
+## ✅ Tamamlanan Özellikler v1.4.0
 
-### v1.3.0 Yeni Özellikler (P1 + P2)
+### v1.4.0 Yeni Özellikler (P0 Backlog - Frontend Entegrasyonu)
+- [x] **OCR Frontend Entegrasyonu** - Plaka alanına "Tara" butonu, server (Google Vision) veya browser (Tesseract.js) fallback
+- [x] **Voice-to-Text Frontend Entegrasyonu** - Not alanına 2 mikrofon butonu:
+  - Gri mikrofon: Browser Web Speech API (ücretsiz, anlık)
+  - Sarı mikrofon: Server OpenAI Whisper (daha doğru, API key gerekli)
+- [x] **Admin Settings - Voice Provider** - Transkripsiyon sağlayıcı seçimi eklendi
+- [x] **Graceful Degradation** - Server servisleri yapılandırılmamışsa otomatik browser fallback
+
+### v1.3.0 Özellikler (Backend Entegrasyonu)
 - [x] **AWS S3 Depolama** - Dosya yükleme/indirme (API key gerekli)
 - [x] **Google Drive Depolama** - Bulut depolama (OAuth gerekli)
 - [x] **FTP Depolama** - Harici FTP sunucu desteği
@@ -79,7 +87,7 @@ Renault Trucks için WhatsApp benzeri arayüze sahip Garanti Görsel/Video/PDF K
 - `POST /api/notifications` - Bildirim gönder
 - `PUT /api/notifications/read-all` - Tümünü okundu işaretle
 
-### Servisler (v1.3.0)
+### Servisler (v1.3.0+)
 - `GET /api/services/status` - Servis durumları (Admin)
 - `GET /api/storage/providers` - Depolama sağlayıcıları (Admin)
 - `POST /api/storage/set-provider` - Aktif depolama değiştir (Admin)
@@ -112,7 +120,7 @@ LLM_API_KEY=  # Emergent Universal Key (OpenAI Whisper için)
 
 ## Demo Hesaplar
 - **Admin**: admin / admin123
-- **Staff**: hadimkoy_garanti / test123
+- **Staff**: hadimkoy_garanti / password123
 - **Stajyer**: test_stajyer / test123
 
 ## Test Raporları
@@ -120,13 +128,20 @@ LLM_API_KEY=  # Emergent Universal Key (OpenAI Whisper için)
 - /app/test_reports/iteration_2.json
 - /app/test_reports/iteration_3.json (v1.2.0)
 - /app/test_reports/iteration_4.json (v1.3.0 - 23 test geçti)
+- /app/test_reports/iteration_5.json (v1.4.0 - 17 backend + frontend testler geçti)
 
 ## Backlog
 
-### P0-P1 ✅ TAMAMLANDI
-Tüm kritik ve yüksek öncelikli görevler tamamlandı.
+### ✅ P0 TAMAMLANDI (v1.4.0)
+- [x] OCR Frontend entegrasyonu
+- [x] Voice-to-Text Frontend entegrasyonu
+- [x] Admin Settings - API ayarları kaydetme
 
-### P2 (Kalan)
+### P1 (Sonraki)
+- [ ] **Mobil API Dokümantasyonu** - OpenAPI/Swagger veya API_DOCS.md
+- [ ] **Dosya Depolama Tam Entegrasyonu** - Kayıt oluşturulduğunda S3/GDrive'a yükleme
+
+### P2 (Gelecek)
 - [ ] Native mobil uygulama (Android/iOS)
 - [ ] Gelişmiş raporlama ve export (PDF/Excel)
 - [ ] WhatsApp entegrasyonu (bildirimler için)
