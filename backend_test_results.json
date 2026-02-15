@@ -12,6 +12,10 @@
     "Create Standard Record",
     "Work Order Branch Extraction",
     "Branch Selection Required",
+    "Create RoadAssist Record",
+    "Create Damaged Record",
+    "Create PDI Record",
+    "Branch Filter Records",
     "Get Single Record",
     "Staff Record Restriction",
     "Update Record Note",
@@ -24,26 +28,14 @@
   ],
   "failed": [
     {
-      "test": "Create RoadAssist Record",
-      "details": "Status: 400 - {\"detail\":\"Yol yard\u0131m kayd\u0131 i\u00e7in \u015fube se\u00e7imi zorunlu\"}"
-    },
-    {
-      "test": "Create Damaged Record",
-      "details": "Status: 400 - {\"detail\":\"Hasarl\u0131 ara\u00e7 kayd\u0131 i\u00e7in \u015fube se\u00e7imi zorunlu\"}"
-    },
-    {
-      "test": "Create PDI Record",
-      "details": "Status: 400 - {\"detail\":\"PDI kayd\u0131 i\u00e7in \u015fube se\u00e7imi zorunlu\"}"
-    },
-    {
       "test": "Get Records List",
       "details": "Status: 520"
     }
   ],
   "summary": {
-    "total_tests": 25,
-    "passed_tests": 21,
-    "failed_tests": 4,
-    "success_rate": "84.0%"
+    "total_tests": 26,
+    "passed_tests": 25,
+    "failed_tests": 1,
+    "success_rate": "96.2%"
   }
 }
