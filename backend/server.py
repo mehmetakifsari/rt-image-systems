@@ -80,6 +80,20 @@ class MediaType(str, Enum):
 class UserRole(str, Enum):
     ADMIN = "admin"
     STAFF = "staff"  # Alt hesaplar (danışmanlar)
+    APPRENTICE = "apprentice"  # Stajyer/Çırak
+
+# Record Status for Apprentice workflow
+class RecordStatus(str, Enum):
+    ACTIVE = "active"
+    PENDING_REVIEW = "pending_review"  # Stajyer tarafından oluşturuldu, danışman onayı bekliyor
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    DELETED = "deleted"
+
+# Application Version
+APP_VERSION = "1.2.0"
+VERSION_DATE = "2025-12-15"
+BUILD_NUMBER = "2025121501"
 
 # Models
 class UserCreate(BaseModel):
@@ -835,7 +849,22 @@ async def get_my_stats(current_user: dict = Depends(get_current_user)):
 # Health check
 @api_router.get("/")
 async def root():
-    return {"message": "Renault Trucks Garanti Kayıt Sistemi API", "version": "1.1.0"}
+    return {
+        "message": "Renault Trucks Garanti Kayıt Sistemi API",
+        "version": APP_VERSION,
+        "date": VERSION_DATE,
+        "build": BUILD_NUMBER
+    }
+
+# Version endpoint
+@api_router.get("/version")
+async def get_version():
+    return {
+        "version": APP_VERSION,
+        "date": VERSION_DATE,
+        "build": BUILD_NUMBER,
+        "fullVersion": f"v{APP_VERSION} ({BUILD_NUMBER})"
+    }
 
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
