@@ -281,14 +281,20 @@ const AdminPage = () => {
       {/* Main content */}
       <main className="flex-1 min-w-0">
         {/* Header */}
-        <header className="glass-header sticky top-0 z-30 px-4 py-4 flex items-center gap-4">
+        <header className={`sticky top-0 z-30 px-4 py-4 flex items-center gap-4 backdrop-blur-xl border-b ${
+          theme === 'dark' 
+            ? 'bg-[#09090b]/90 border-[#27272a]' 
+            : 'bg-white/90 border-gray-200'
+        }`}>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden w-10 h-10 bg-[#27272a] rounded-xl flex items-center justify-center"
+            className={`lg:hidden w-10 h-10 rounded-xl flex items-center justify-center ${
+              theme === 'dark' ? 'bg-[#27272a]' : 'bg-gray-100'
+            }`}
           >
-            <Menu className="w-5 h-5 text-white" />
+            <Menu className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`} />
           </button>
-          <h2 className="text-xl font-bold text-white">
+          <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             {menuItems.find(m => m.id === activeTab)?.label}
           </h2>
         </header>
@@ -305,22 +311,34 @@ const AdminPage = () => {
                 <div className="space-y-6">
                   {/* Stats grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div className="record-card p-4">
-                      <p className="text-zinc-500 text-sm mb-1">{t('admin.totalRecords')}</p>
-                      <p className="text-3xl font-bold text-white">{stats.total}</p>
+                    <div className={`p-4 rounded-xl border ${
+                      theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                    }`}>
+                      <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                        {t('admin.totalRecords')}
+                      </p>
+                      <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {stats.total}
+                      </p>
                     </div>
                     {Object.entries(stats.by_type).map(([type, count]) => {
                       const Icon = RECORD_TYPE_ICONS[type];
                       const colorClass = RECORD_TYPE_COLORS[type];
                       return (
-                        <div key={type} className="record-card p-4">
+                        <div key={type} className={`p-4 rounded-xl border ${
+                          theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                        }`}>
                           <div className="flex items-center gap-2 mb-2">
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass}`}>
                               <Icon className="w-4 h-4" />
                             </div>
-                            <span className="text-zinc-500 text-sm">{t(`record.${type}`)}</span>
+                            <span className={`text-sm ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                              {t(`record.${type}`)}
+                            </span>
                           </div>
-                          <p className="text-2xl font-bold text-white">{count}</p>
+                          <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {count}
+                          </p>
                         </div>
                       );
                     })}
@@ -328,38 +346,58 @@ const AdminPage = () => {
 
                   {/* Branch Overview */}
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-4">{t('admin.branchOverview')}</h3>
+                    <h3 className={`text-lg font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {t('admin.branchOverview')}
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                       {stats.branches.map((branch) => (
-                        <div key={branch.code} className="record-card p-4">
+                        <div key={branch.code} className={`p-4 rounded-xl border ${
+                          theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                        }`}>
                           <div className="flex items-center gap-2 mb-3">
                             <Building2 className="w-5 h-5 text-[#FACC15]" />
-                            <h4 className="text-white font-semibold">{branch.name}</h4>
+                            <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                              {branch.name}
+                            </h4>
                           </div>
                           
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-zinc-500">{t('misc.records')}:</span>
-                              <span className="text-white font-medium">{branch.total_records}</span>
+                              <span className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>
+                                {t('misc.records')}:
+                              </span>
+                              <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                {branch.total_records}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-zinc-500">{t('misc.staff')}:</span>
-                              <span className="text-white font-medium">{branch.staff_count}</span>
+                              <span className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>
+                                {t('misc.staff')}:
+                              </span>
+                              <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                {branch.staff_count}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-zinc-500">{t('admin.onlineStaff')}:</span>
+                              <span className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>
+                                {t('admin.onlineStaff')}:
+                              </span>
                               <span className="text-green-400 font-medium">{branch.online_count}</span>
                             </div>
                           </div>
 
                           {/* Staff list */}
                           {branch.staff.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-[#27272a] space-y-2">
+                            <div className={`mt-3 pt-3 border-t space-y-2 ${
+                              theme === 'dark' ? 'border-[#27272a]' : 'border-gray-200'
+                            }`}>
                               {branch.staff.slice(0, 3).map((s) => (
                                 <div key={s.id} className="flex items-center justify-between">
                                   <div className="flex items-center gap-2 min-w-0">
                                     <div className={`w-2 h-2 rounded-full ${s.is_online ? 'bg-green-400' : 'bg-zinc-600'}`} />
-                                    <span className="text-zinc-300 text-xs truncate">{s.full_name}</span>
+                                    <span className={`text-xs truncate ${
+                                      theme === 'dark' ? 'text-zinc-300' : 'text-gray-600'
+                                    }`}>{s.full_name}</span>
                                   </div>
                                   {s.whatsapp && (
                                     <a
@@ -381,8 +419,12 @@ const AdminPage = () => {
                   </div>
 
                   {/* Recent records */}
-                  <div className="record-card p-4">
-                    <h3 className="text-lg font-bold text-white mb-4">{t('admin.recentRecords')}</h3>
+                  <div className={`p-4 rounded-xl border ${
+                    theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                  }`}>
+                    <h3 className={`text-lg font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {t('admin.recentRecords')}
+                    </h3>
                     <div className="space-y-3">
                       {stats.recent.map((record) => {
                         const Icon = RECORD_TYPE_ICONS[record.record_type];
@@ -391,20 +433,24 @@ const AdminPage = () => {
                           <div 
                             key={record.id}
                             onClick={() => navigate(`/record/${record.id}`)}
-                            className="flex items-center gap-3 p-3 bg-[#09090b] rounded-xl cursor-pointer hover:bg-[#27272a] transition-colors"
+                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                              theme === 'dark' 
+                                ? 'bg-[#09090b] hover:bg-[#27272a]' 
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
                           >
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClass}`}>
                               <Icon className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-white font-medium truncate">
+                              <p className={`font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                                 {record.plate || record.vin || record.reference_no || record.case_key}
                               </p>
-                              <p className="text-zinc-500 text-sm">
+                              <p className={`text-sm ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
                                 {record.branch_name} • {new Date(record.created_at).toLocaleString('tr-TR')}
                               </p>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-zinc-600" />
+                            <ChevronRight className={`w-5 h-5 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`} />
                           </div>
                         );
                       })}
