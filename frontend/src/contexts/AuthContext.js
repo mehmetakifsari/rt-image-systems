@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [selectedBranch, setSelectedBranch] = useState(localStorage.getItem('selectedBranch') || null);
 
   useEffect(() => {
     if (token) {
@@ -23,6 +24,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       setUser(response.data);
+      // Staff için şube otomatik ayarla
+      if (response.data.branch_code && !selectedBranch) {
+        setSelectedBranch(response.data.branch_code);
+        localStorage.setItem('selectedBranch', response.data.branch_code);
+      }
     } catch (error) {
       console.error('Auth error:', error);
       logout();
@@ -38,6 +44,11 @@ export const AuthProvider = ({ children }) => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     setToken(newToken);
     setUser(userData);
+    // Staff için şube otomatik ayarla
+    if (userData.branch_code) {
+      setSelectedBranch(userData.branch_code);
+      localStorage.setItem('selectedBranch', userData.branch_code);
+    }
     return userData;
   };
 
@@ -46,15 +57,41 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
-  const logout = () => {
+  const updateProfile = async (data) => {
+    const response = await axios.put(`${API}/auth/profile`, data);
+    setUser(response.data);
+    return response.data;
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post(`${API}/auth/logout`);
+    } catch (error) {
+      // Ignore logout errors
+    }
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
   };
 
+  const changeBranch = (branchCode) => {
+    setSelectedBranch(branchCode);
+    localStorage.setItem('selectedBranch', branchCode);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      login, 
+      register, 
+      logout, 
+      updateProfile,
+      selectedBranch,
+      changeBranch
+    }}>
       {children}
     </AuthContext.Provider>
   );
