@@ -31,11 +31,13 @@ const HomePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isOnline, pendingUploads, isSyncing } = useOffline();
+  const { user, logout } = useAuth();
   
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     fetchRecords();
