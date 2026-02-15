@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form, Depends, Query
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -46,6 +46,22 @@ ALLOWED_PHOTO_EXT = {'.jpg', '.jpeg', '.png', '.webp'}
 ALLOWED_VIDEO_EXT = {'.mp4', '.mov', '.avi', '.webm'}
 ALLOWED_PDF_EXT = {'.pdf'}
 
+# Şube tanımlamaları
+BRANCHES = {
+    "1": {"code": "1", "name": "Bursa", "city": "Bursa"},
+    "2": {"code": "2", "name": "İzmit", "city": "Kocaeli"},
+    "3": {"code": "3", "name": "Orhanlı", "city": "İstanbul"},
+    "4": {"code": "4", "name": "Hadımköy", "city": "İstanbul"},
+    "5": {"code": "5", "name": "Keşan", "city": "Edirne"}
+}
+
+# Görev tanımları
+JOB_TITLES = {
+    "garanti_danisman": "Garanti Danışmanı",
+    "hasar_danisman": "Hasar Danışmanı",
+    "musteri_kabul": "Müşteri Kabul Personeli"
+}
+
 app = FastAPI(title="Renault Trucks Garanti Kayıt Sistemi")
 api_router = APIRouter(prefix="/api")
 
@@ -61,13 +77,27 @@ class MediaType(str, Enum):
     VIDEO = "video"
     PDF = "pdf"
 
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    STAFF = "staff"  # Alt hesaplar (danışmanlar)
+
 # Models
 class UserCreate(BaseModel):
     username: str
     password: str
     full_name: str
-    role: str = "user"
-    branch: str = ""
+    role: str = "staff"
+    branch_code: Optional[str] = None
+    job_title: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    branch_code: Optional[str] = None
+    job_title: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
@@ -79,7 +109,14 @@ class UserResponse(BaseModel):
     username: str
     full_name: str
     role: str
-    branch: str
+    branch_code: Optional[str] = None
+    branch_name: Optional[str] = None
+    job_title: Optional[str] = None
+    job_title_display: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    is_online: bool = False
+    last_seen: Optional[str] = None
     created_at: str
 
 class FileItem(BaseModel):
@@ -99,6 +136,14 @@ class RecordCreate(BaseModel):
     vin: Optional[str] = None
     reference_no: Optional[str] = None
     note_text: Optional[str] = None
+    branch_code: Optional[str] = None  # PDI, Hasarlı, Yol yardım için
+
+class RecordUpdate(BaseModel):
+    plate: Optional[str] = None
+    work_order: Optional[str] = None
+    vin: Optional[str] = None
+    reference_no: Optional[str] = None
+    note_text: Optional[str] = None
 
 class RecordResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -113,7 +158,8 @@ class RecordResponse(BaseModel):
     note_text: Optional[str] = None
     files_json: List[Dict[str, Any]] = []
     user_id: str
-    branch: str
+    branch_code: str
+    branch_name: Optional[str] = None
     created_at: str
     updated_at: str
     status: str = "active"
@@ -156,11 +202,12 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-def create_token(user_id: str, username: str, role: str) -> str:
+def create_token(user_id: str, username: str, role: str, branch_code: str = None) -> str:
     payload = {
         'user_id': user_id,
         'username': username,
         'role': role,
+        'branch_code': branch_code,
         'exp': datetime.now(timezone.utc).timestamp() + 86400 * 7  # 7 days
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -173,24 +220,48 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user = await db.users.find_one({"id": payload['user_id']}, {"_id": 0})
         if not user:
             raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
+        # Update last seen
+        await db.users.update_one(
+            {"id": user['id']},
+            {"$set": {"last_seen": datetime.now(timezone.utc).isoformat(), "is_online": True}}
+        )
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token süresi dolmuş")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Geçersiz token")
 
+def get_branch_name(branch_code: str) -> str:
+    return BRANCHES.get(branch_code, {}).get("name", "Bilinmiyor")
+
+def get_job_title_display(job_title: str) -> str:
+    return JOB_TITLES.get(job_title, job_title)
+
+# İş emri numarasından şube kodunu çıkar
+def extract_branch_from_work_order(work_order: str) -> str:
+    """
+    İş emri formatı: 40216001
+    İlk rakam şube kodudur: 4 = Hadımköy
+    """
+    if work_order and len(work_order) >= 1:
+        first_char = work_order[0]
+        if first_char in BRANCHES:
+            return first_char
+    return None
+
 # Generate case_key based on record type
 def generate_case_key(record_type: str, plate: str = None, work_order: str = None, 
-                      vin: str = None, reference_no: str = None) -> str:
+                      vin: str = None, reference_no: str = None, branch_code: str = None) -> str:
     year = datetime.now().year
+    branch_prefix = branch_code or "0"
     if record_type == RecordType.STANDARD:
-        return f"{year}-STD-{work_order or 'NOORDER'}-{plate or 'NOPLATE'}"
+        return f"{year}-STD-{branch_prefix}-{work_order or 'NOORDER'}-{plate or 'NOPLATE'}"
     elif record_type == RecordType.ROADASSIST:
-        return f"{year}-RA-{plate or 'NOPLATE'}"
+        return f"{year}-RA-{branch_prefix}-{plate or 'NOPLATE'}"
     elif record_type == RecordType.DAMAGED:
-        return f"{year}-DMG-{reference_no or 'NOREF'}"
+        return f"{year}-DMG-{branch_prefix}-{reference_no or 'NOREF'}"
     elif record_type == RecordType.PDI:
-        return f"{year}-PDI-{vin or 'NOVIN'}"
+        return f"{year}-PDI-{branch_prefix}-{vin or 'NOVIN'}"
     return f"{year}-UNK-{uuid.uuid4().hex[:8]}"
 
 # Generate filename
@@ -199,12 +270,32 @@ def generate_filename(record_type: str, identifier: str, seq: int, ext: str) -> 
     date_str = now.strftime('%Y%m%d_%H%M')
     return f"{now.year}-{record_type}-{identifier}-{date_str}-{seq:03d}{ext}"
 
+# Branches endpoint
+@api_router.get("/branches")
+async def get_branches():
+    return {"branches": list(BRANCHES.values())}
+
+@api_router.get("/job-titles")
+async def get_job_titles():
+    return {"job_titles": [{"code": k, "name": v} for k, v in JOB_TITLES.items()]}
+
 # Auth Routes
 @api_router.post("/auth/register", response_model=UserResponse)
-async def register(user: UserCreate):
+async def register(user: UserCreate, current_user: dict = Depends(get_current_user)):
+    # Sadece admin kullanıcı oluşturabilir
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
     existing = await db.users.find_one({"username": user.username})
     if existing:
         raise HTTPException(status_code=400, detail="Kullanıcı adı zaten mevcut")
+    
+    # Staff için şube ve görev zorunlu
+    if user.role == 'staff':
+        if not user.branch_code:
+            raise HTTPException(status_code=400, detail="Şube seçimi zorunludur")
+        if not user.job_title:
+            raise HTTPException(status_code=400, detail="Görev tanımı zorunludur")
     
     user_doc = {
         "id": str(uuid.uuid4()),
@@ -212,7 +303,14 @@ async def register(user: UserCreate):
         "password": hash_password(user.password),
         "full_name": user.full_name,
         "role": user.role,
-        "branch": user.branch,
+        "branch_code": user.branch_code,
+        "branch_name": get_branch_name(user.branch_code) if user.branch_code else None,
+        "job_title": user.job_title,
+        "job_title_display": get_job_title_display(user.job_title) if user.job_title else None,
+        "phone": user.phone,
+        "whatsapp": user.whatsapp,
+        "is_online": False,
+        "last_seen": None,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
@@ -226,7 +324,13 @@ async def login(user: UserLogin):
     if not db_user or not verify_password(user.password, db_user['password']):
         raise HTTPException(status_code=401, detail="Geçersiz kullanıcı adı veya şifre")
     
-    token = create_token(db_user['id'], db_user['username'], db_user['role'])
+    # Update online status
+    await db.users.update_one(
+        {"id": db_user['id']},
+        {"$set": {"is_online": True, "last_seen": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    token = create_token(db_user['id'], db_user['username'], db_user['role'], db_user.get('branch_code'))
     return {
         "token": token,
         "user": {
@@ -234,13 +338,102 @@ async def login(user: UserLogin):
             "username": db_user['username'],
             "full_name": db_user['full_name'],
             "role": db_user['role'],
-            "branch": db_user['branch']
+            "branch_code": db_user.get('branch_code'),
+            "branch_name": db_user.get('branch_name'),
+            "job_title": db_user.get('job_title'),
+            "job_title_display": db_user.get('job_title_display'),
+            "phone": db_user.get('phone'),
+            "whatsapp": db_user.get('whatsapp')
         }
     }
+
+@api_router.post("/auth/logout")
+async def logout(current_user: dict = Depends(get_current_user)):
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {"$set": {"is_online": False, "last_seen": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True}
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
     return UserResponse(**current_user)
+
+@api_router.put("/auth/profile", response_model=UserResponse)
+async def update_profile(update: UserUpdate, current_user: dict = Depends(get_current_user)):
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    
+    if 'branch_code' in update_data:
+        update_data['branch_name'] = get_branch_name(update_data['branch_code'])
+    if 'job_title' in update_data:
+        update_data['job_title_display'] = get_job_title_display(update_data['job_title'])
+    
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {"$set": update_data}
+    )
+    
+    updated_user = await db.users.find_one({"id": current_user['id']}, {"_id": 0, "password": 0})
+    return UserResponse(**updated_user)
+
+# Staff Management (Admin only)
+@api_router.get("/staff", response_model=List[UserResponse])
+async def get_staff(
+    branch_code: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    query = {"role": "staff"}
+    if branch_code:
+        query["branch_code"] = branch_code
+    
+    staff = await db.users.find(query, {"_id": 0, "password": 0}).to_list(100)
+    return [UserResponse(**s) for s in staff]
+
+@api_router.get("/staff/{user_id}", response_model=UserResponse)
+async def get_staff_member(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    staff = await db.users.find_one({"id": user_id, "role": "staff"}, {"_id": 0, "password": 0})
+    if not staff:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    return UserResponse(**staff)
+
+@api_router.put("/staff/{user_id}", response_model=UserResponse)
+async def update_staff(user_id: str, update: UserUpdate, current_user: dict = Depends(get_current_user)):
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    
+    if 'branch_code' in update_data:
+        update_data['branch_name'] = get_branch_name(update_data['branch_code'])
+    if 'job_title' in update_data:
+        update_data['job_title_display'] = get_job_title_display(update_data['job_title'])
+    
+    result = await db.users.update_one(
+        {"id": user_id, "role": "staff"},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    updated_user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    return UserResponse(**updated_user)
+
+@api_router.delete("/staff/{user_id}")
+async def delete_staff(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
+    result = await db.users.delete_one({"id": user_id, "role": "staff"})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    return {"success": True}
 
 # Record Routes
 @api_router.post("/records", response_model=RecordResponse)
@@ -252,12 +445,32 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
     elif record.record_type == RecordType.ROADASSIST:
         if not record.plate:
             raise HTTPException(status_code=400, detail="Yol yardım kaydı için plaka zorunlu")
+        if not record.branch_code:
+            raise HTTPException(status_code=400, detail="Yol yardım kaydı için şube seçimi zorunlu")
     elif record.record_type == RecordType.DAMAGED:
         if not record.reference_no:
             raise HTTPException(status_code=400, detail="Hasarlı araç kaydı için referans no zorunlu")
+        if not record.branch_code:
+            raise HTTPException(status_code=400, detail="Hasarlı araç kaydı için şube seçimi zorunlu")
     elif record.record_type == RecordType.PDI:
         if not record.vin:
             raise HTTPException(status_code=400, detail="PDI kaydı için VIN/Şasi No zorunlu")
+        if not record.branch_code:
+            raise HTTPException(status_code=400, detail="PDI kaydı için şube seçimi zorunlu")
+    
+    # Şube kodunu belirle
+    branch_code = record.branch_code
+    if record.record_type == RecordType.STANDARD and record.work_order:
+        # İş emri numarasından şube kodunu çıkar
+        extracted_branch = extract_branch_from_work_order(record.work_order)
+        if extracted_branch:
+            branch_code = extracted_branch
+    
+    # Staff kullanıcılar sadece kendi şubelerine kayıt yapabilir
+    if current_user.get('role') == 'staff':
+        if branch_code and branch_code != current_user.get('branch_code'):
+            raise HTTPException(status_code=403, detail="Sadece kendi şubenize kayıt yapabilirsiniz")
+        branch_code = current_user.get('branch_code')
     
     now = datetime.now(timezone.utc).isoformat()
     vin_last5 = record.vin[-5:] if record.vin and len(record.vin) >= 5 else None
@@ -267,7 +480,8 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
         record.plate, 
         record.work_order, 
         record.vin, 
-        record.reference_no
+        record.reference_no,
+        branch_code
     )
     
     record_doc = {
@@ -282,7 +496,8 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
         "note_text": record.note_text,
         "files_json": [],
         "user_id": current_user['id'],
-        "branch": current_user.get('branch', ''),
+        "branch_code": branch_code or "0",
+        "branch_name": get_branch_name(branch_code) if branch_code else "Bilinmiyor",
         "created_at": now,
         "updated_at": now,
         "status": "active"
@@ -294,7 +509,7 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
 @api_router.get("/records", response_model=List[RecordResponse])
 async def get_records(
     record_type: Optional[str] = None,
-    branch: Optional[str] = None,
+    branch_code: Optional[str] = None,
     search: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
@@ -302,10 +517,14 @@ async def get_records(
 ):
     query = {"status": "active"}
     
+    # Staff kullanıcılar sadece kendi şubelerinin kayıtlarını görebilir
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    elif branch_code:
+        query["branch_code"] = branch_code
+    
     if record_type:
         query["record_type"] = record_type
-    if branch:
-        query["branch"] = branch
     if search:
         query["$or"] = [
             {"plate": {"$regex": search, "$options": "i"}},
@@ -322,15 +541,44 @@ async def get_records(
 
 @api_router.get("/records/{record_id}", response_model=RecordResponse)
 async def get_record(record_id: str, current_user: dict = Depends(get_current_user)):
-    record = await db.uploads.find_one({"id": record_id}, {"_id": 0})
+    query = {"id": record_id}
+    
+    # Staff kullanıcılar sadece kendi şubelerinin kayıtlarını görebilir
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    record = await db.uploads.find_one(query, {"_id": 0})
     if not record:
         raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
     return RecordResponse(**record)
 
+@api_router.put("/records/{record_id}", response_model=RecordResponse)
+async def update_record(record_id: str, update: RecordUpdate, current_user: dict = Depends(get_current_user)):
+    query = {"id": record_id}
+    
+    # Staff kullanıcılar sadece kendi şubelerinin kayıtlarını düzenleyebilir
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.uploads.update_one(query, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
+    
+    record = await db.uploads.find_one({"id": record_id}, {"_id": 0})
+    return RecordResponse(**record)
+
 @api_router.put("/records/{record_id}/note")
 async def update_record_note(record_id: str, note_text: str = Form(...), current_user: dict = Depends(get_current_user)):
+    query = {"id": record_id}
+    
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
     result = await db.uploads.update_one(
-        {"id": record_id},
+        query,
         {"$set": {"note_text": note_text, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     if result.modified_count == 0:
@@ -339,8 +587,13 @@ async def update_record_note(record_id: str, note_text: str = Form(...), current
 
 @api_router.delete("/records/{record_id}")
 async def delete_record(record_id: str, current_user: dict = Depends(get_current_user)):
+    query = {"id": record_id}
+    
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
     result = await db.uploads.update_one(
-        {"id": record_id},
+        query,
         {"$set": {"status": "deleted", "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     if result.modified_count == 0:
@@ -355,7 +608,12 @@ async def upload_file(
     media_type: str = Form(...),
     current_user: dict = Depends(get_current_user)
 ):
-    record = await db.uploads.find_one({"id": record_id})
+    query = {"id": record_id}
+    
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    record = await db.uploads.find_one(query)
     if not record:
         raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
     
@@ -420,7 +678,12 @@ async def upload_file(
 
 @api_router.delete("/records/{record_id}/files/{file_id}")
 async def delete_file(record_id: str, file_id: str, current_user: dict = Depends(get_current_user)):
-    record = await db.uploads.find_one({"id": record_id})
+    query = {"id": record_id}
+    
+    if current_user.get('role') == 'staff':
+        query["branch_code"] = current_user.get('branch_code')
+    
+    record = await db.uploads.find_one(query)
     if not record:
         raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
     
@@ -466,7 +729,6 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
         }
         await db.settings.insert_one(settings)
     
-    # Mask sensitive data
     return SettingsResponse(**settings)
 
 @api_router.put("/settings", response_model=SettingsResponse)
@@ -490,9 +752,12 @@ async def update_settings(settings: SettingsUpdate, current_user: dict = Depends
     updated = await db.settings.find_one({}, {"_id": 0})
     return SettingsResponse(**updated)
 
-# Dashboard Stats
+# Dashboard Stats (Admin)
 @api_router.get("/stats")
 async def get_stats(current_user: dict = Depends(get_current_user)):
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Yetkiniz yok")
+    
     total = await db.uploads.count_documents({"status": "active"})
     standard = await db.uploads.count_documents({"status": "active", "record_type": "standard"})
     roadassist = await db.uploads.count_documents({"status": "active", "record_type": "roadassist"})
@@ -502,6 +767,27 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
     # Recent records
     recent = await db.uploads.find({"status": "active"}, {"_id": 0}).sort("created_at", -1).limit(5).to_list(5)
     
+    # Branch stats
+    branch_stats = []
+    for code, branch in BRANCHES.items():
+        branch_total = await db.uploads.count_documents({"status": "active", "branch_code": code})
+        branch_staff = await db.users.find(
+            {"role": "staff", "branch_code": code}, 
+            {"_id": 0, "password": 0}
+        ).to_list(20)
+        
+        online_count = sum(1 for s in branch_staff if s.get('is_online'))
+        
+        branch_stats.append({
+            "code": code,
+            "name": branch["name"],
+            "city": branch["city"],
+            "total_records": branch_total,
+            "staff": branch_staff,
+            "staff_count": len(branch_staff),
+            "online_count": online_count
+        })
+    
     return {
         "total": total,
         "by_type": {
@@ -510,13 +796,46 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
             "damaged": damaged,
             "pdi": pdi
         },
-        "recent": recent
+        "recent": recent,
+        "branches": branch_stats
+    }
+
+# Staff dashboard (for staff users)
+@api_router.get("/my-stats")
+async def get_my_stats(current_user: dict = Depends(get_current_user)):
+    branch_code = current_user.get('branch_code')
+    
+    query = {"status": "active"}
+    if branch_code:
+        query["branch_code"] = branch_code
+    
+    total = await db.uploads.count_documents(query)
+    
+    type_query = {**query}
+    standard = await db.uploads.count_documents({**type_query, "record_type": "standard"})
+    roadassist = await db.uploads.count_documents({**type_query, "record_type": "roadassist"})
+    damaged = await db.uploads.count_documents({**type_query, "record_type": "damaged"})
+    pdi = await db.uploads.count_documents({**type_query, "record_type": "pdi"})
+    
+    # Recent records for this branch
+    recent = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).limit(10).to_list(10)
+    
+    return {
+        "total": total,
+        "by_type": {
+            "standard": standard,
+            "roadassist": roadassist,
+            "damaged": damaged,
+            "pdi": pdi
+        },
+        "recent": recent,
+        "branch_name": get_branch_name(branch_code) if branch_code else None
     }
 
 # Health check
 @api_router.get("/")
 async def root():
-    return {"message": "Renault Trucks Garanti Kayıt Sistemi API", "version": "1.0.0"}
+    return {"message": "Renault Trucks Garanti Kayıt Sistemi API", "version": "1.1.0"}
 
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
@@ -546,7 +865,9 @@ async def startup():
     await db.uploads.create_index("plate")
     await db.uploads.create_index("work_order")
     await db.uploads.create_index("vin_last5")
+    await db.uploads.create_index("branch_code")
     await db.users.create_index("username", unique=True)
+    await db.users.create_index("branch_code")
     
     # Create default admin if not exists
     admin = await db.users.find_one({"username": "admin"})
@@ -557,7 +878,14 @@ async def startup():
             "password": hash_password("admin123"),
             "full_name": "Sistem Yöneticisi",
             "role": "admin",
-            "branch": "Merkez",
+            "branch_code": None,
+            "branch_name": None,
+            "job_title": None,
+            "job_title_display": None,
+            "phone": None,
+            "whatsapp": None,
+            "is_online": False,
+            "last_seen": None,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(admin_doc)
