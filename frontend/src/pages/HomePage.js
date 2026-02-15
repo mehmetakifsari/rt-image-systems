@@ -76,10 +76,16 @@ const HomePage = () => {
     return record.case_key;
   };
 
+  const handleLogout = async () => {
+    await logout();
+    toast.success(t('msg.logoutSuccess'));
+    navigate('/login');
+  };
+
   const getRecordSubtitle = (record) => {
     const parts = [];
     if (record.work_order) parts.push(`İş Emri: ${record.work_order}`);
-    if (record.branch) parts.push(record.branch);
+    if (record.branch_name) parts.push(record.branch_name);
     return parts.join(' • ') || formatDate(record.created_at);
   };
 
