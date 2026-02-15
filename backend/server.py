@@ -177,6 +177,35 @@ class RecordResponse(BaseModel):
     created_at: str
     updated_at: str
     status: str = "active"
+    created_by_name: Optional[str] = None
+    created_by_role: Optional[str] = None
+
+# Notification Models
+class NotificationType(str, Enum):
+    MISSING_DOCUMENT = "missing_document"
+    RETAKE_PHOTO = "retake_photo"
+    RECORD_APPROVED = "record_approved"
+    RECORD_REJECTED = "record_rejected"
+    NEW_RECORD = "new_record"
+
+class NotificationCreate(BaseModel):
+    record_id: str
+    recipient_id: str
+    notification_type: NotificationType
+    message: str
+
+class NotificationResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    record_id: str
+    sender_id: str
+    sender_name: str
+    recipient_id: str
+    recipient_name: str
+    notification_type: str
+    message: str
+    is_read: bool = False
+    created_at: str
 
 class SettingsUpdate(BaseModel):
     vision_api_key: Optional[str] = None
