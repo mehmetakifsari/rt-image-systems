@@ -175,7 +175,7 @@ class RecordResponse(BaseModel):
     note_text: Optional[str] = None
     files_json: List[Dict[str, Any]] = []
     user_id: str
-    branch_code: str
+    branch_code: Optional[str] = "0"  # Default for legacy records without branch_code
     branch_name: Optional[str] = None
     created_at: str
     updated_at: str
