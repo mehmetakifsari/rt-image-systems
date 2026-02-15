@@ -91,9 +91,12 @@ class RecordStatus(str, Enum):
     DELETED = "deleted"
 
 # Application Version
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 VERSION_DATE = "2025-12-15"
-BUILD_NUMBER = "2025121501"
+BUILD_NUMBER = "2025121502"
+
+# API Version
+API_VERSION = "v1"
 
 # Models
 class UserCreate(BaseModel):
@@ -587,20 +590,30 @@ async def get_records(
     record_type: Optional[str] = None,
     branch_code: Optional[str] = None,
     search: Optional[str] = None,
+    year: Optional[int] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
     page: int = 1,
     limit: int = 20,
     current_user: dict = Depends(get_current_user)
 ):
-    query = {"status": "active"}
+    query = {"status": {"$in": ["active", "approved"]}}
     
-    # Staff kullanıcılar sadece kendi şubelerinin kayıtlarını görebilir
-    if current_user.get('role') == 'staff':
+    # Staff ve Apprentice kullanıcılar sadece kendi şubelerinin kayıtlarını görebilir
+    if current_user.get('role') in ['staff', 'apprentice']:
         query["branch_code"] = current_user.get('branch_code')
     elif branch_code:
         query["branch_code"] = branch_code
     
     if record_type:
         query["record_type"] = record_type
+    
+    # Yıla göre filtreleme (aynı iş emri numarası farklı yıllarda olabilir)
+    if year:
+        start_date = f"{year}-01-01T00:00:00"
+        end_date = f"{year}-12-31T23:59:59"
+        query["created_at"] = {"$gte": start_date, "$lte": end_date}
+    
     if search:
         query["$or"] = [
             {"plate": {"$regex": search, "$options": "i"}},
@@ -611,8 +624,12 @@ async def get_records(
             {"case_key": {"$regex": search, "$options": "i"}}
         ]
     
+    # Sıralama - varsayılan olarak tarihe göre (yeni önce)
+    sort_direction = -1 if sort_order == "desc" else 1
+    sort_field = sort_by if sort_by in ["created_at", "work_order", "plate"] else "created_at"
+    
     skip = (page - 1) * limit
-    records = await db.uploads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    records = await db.uploads.find(query, {"_id": 0}).sort(sort_field, sort_direction).skip(skip).limit(limit).to_list(limit)
     return [RecordResponse(**r) for r in records]
 
 # IMPORTANT: This route MUST be defined before /records/{record_id} to avoid route collision
