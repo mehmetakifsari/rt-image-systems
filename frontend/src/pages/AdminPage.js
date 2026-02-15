@@ -867,6 +867,9 @@ const AdminPage = () => {
                           <option value="browser">{t('settings.browserOcr')}</option>
                           <option value="vision">{t('settings.visionApi')}</option>
                         </select>
+                        <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                          Tarayıcı: Tesseract.js (ücretsiz), Vision API: Google Cloud (daha doğru, API key gerekli)
+                        </p>
                       </div>
                       
                       {settings.ocr_provider === 'vision' && (
@@ -881,6 +884,52 @@ const AdminPage = () => {
                             placeholder="AIza..."
                             className="w-full h-11 px-4 bg-[#09090b] border border-[#27272a] rounded-lg text-white"
                           />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Voice-to-Text Settings */}
+                  <div className={`p-6 rounded-xl border ${
+                    theme === 'dark' ? 'bg-[#18181b] border-[#27272a]' : 'bg-white border-gray-200'
+                  }`}>
+                    <h3 className={`text-lg font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      Sesli Not (Voice-to-Text)
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${
+                          theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+                        }`}>
+                          Transkripsiyon Sağlayıcı
+                        </label>
+                        <select
+                          value={settings.voice_provider || 'browser'}
+                          onChange={(e) => handleSettingsChange('voice_provider', e.target.value)}
+                          className={`w-full h-11 px-4 rounded-lg border ${
+                            theme === 'dark'
+                              ? 'bg-[#09090b] border-[#27272a] text-white'
+                              : 'bg-gray-50 border-gray-200 text-gray-900'
+                          }`}
+                        >
+                          <option value="browser">Tarayıcı (Web Speech API)</option>
+                          <option value="openai">OpenAI Whisper</option>
+                          <option value="gemini">Google Gemini</option>
+                        </select>
+                        <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                          Tarayıcı: Ücretsiz ama sınırlı, Whisper/Gemini: Daha doğru (API key gerekli)
+                        </p>
+                      </div>
+                      
+                      {(settings.voice_provider === 'openai' || settings.voice_provider === 'gemini') && (
+                        <div className={`p-3 rounded-lg ${
+                          theme === 'dark' ? 'bg-[#09090b]' : 'bg-gray-50'
+                        }`}>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+                            <strong>Not:</strong> {settings.voice_provider === 'openai' ? 'OpenAI Whisper' : 'Google Gemini'} için 
+                            <span className="text-[#FACC15]"> Emergent LLM Key </span>
+                            kullanılır. Backend ortam değişkenlerinden otomatik alınır.
+                          </p>
                         </div>
                       )}
                     </div>
