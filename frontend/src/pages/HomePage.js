@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'sonner';
 import { APP_VERSION } from '../config/version';
+import NotificationBell from '../components/NotificationBell';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -134,6 +135,9 @@ const HomePage = () => {
                 {isOnline ? t('status.online') : t('status.offline')}
                 {isSyncing && <Loader2 className="w-3 h-3 animate-spin" />}
               </div>
+
+              {/* Notification bell */}
+              <NotificationBell />
 
               {/* Theme toggle */}
               <button
