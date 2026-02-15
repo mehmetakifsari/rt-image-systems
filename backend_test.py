@@ -764,6 +764,9 @@ class RenaultTrucksAPITester:
         if not self.test_api_health():
             print("❌ API is not accessible. Stopping tests.")
             return False
+        
+        # Test branches endpoint (no auth required)
+        self.test_branches_endpoint()
             
         # Authentication tests
         if not self.test_admin_login():
@@ -772,16 +775,29 @@ class RenaultTrucksAPITester:
             
         self.test_auth_me()
         
-        # Record CRUD tests
+        # Test staff login
+        self.test_staff_login()
+        
+        # Admin dashboard and branch management
+        self.test_admin_dashboard_branches()
+        
+        # Staff management tests
+        self.test_create_staff_user()
+        self.test_get_staff_list()
+        self.test_staff_branch_filtering()
+        
+        # Record creation tests with branch system
         self.test_create_standard_record()
+        self.test_work_order_branch_extraction()
+        self.test_branch_selection_required()
         self.test_create_roadassist_record()
         self.test_create_damaged_record()
         self.test_create_pdi_record()
         
-        # Data retrieval tests
+        # Data retrieval and filtering tests
         self.test_get_records_list()
         self.test_get_single_record()
-        self.test_search_records()
+        self.test_staff_record_restriction()
         
         # Update operations
         self.test_update_record_note()
@@ -791,6 +807,10 @@ class RenaultTrucksAPITester:
         self.test_get_stats()
         self.test_get_settings()
         self.test_update_settings()
+        
+        # Cleanup tests
+        self.test_delete_staff_user()
+        self.test_logout_functionality()
         
         # Print results
         print("\n" + "=" * 60)
