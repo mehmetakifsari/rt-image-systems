@@ -1103,30 +1103,37 @@ const StaffModal = ({ staff, onClose, onSave }) => {
     username: staff?.username || '',
     password: '',
     full_name: staff?.full_name || '',
+    role: staff?.role || 'staff',
     branch_code: staff?.branch_code || '',
     job_title: staff?.job_title || '',
     phone: staff?.phone || '',
     whatsapp: staff?.whatsapp || ''
   });
 
+  const isApprentice = formData.role === 'apprentice';
+
   const handleSubmit = async () => {
-    if (!formData.username || !formData.full_name || !formData.branch_code || !formData.job_title) {
+    if (!formData.username || !formData.full_name || !formData.branch_code) {
       toast.error('Lütfen zorunlu alanları doldurun');
       return;
     }
-    if (!staff && !formData.password) {
+    if (!isApprentice && !formData.job_title) {
+      toast.error('Görev tanımı zorunludur');
+      return;
+    }
+    if (!staff?.id && !formData.password) {
       toast.error('Şifre zorunludur');
       return;
     }
 
     setLoading(true);
     try {
-      if (staff) {
+      if (staff?.id) {
         // Update
         await axios.put(`${API}/staff/${staff.id}`, {
           full_name: formData.full_name,
           branch_code: formData.branch_code,
-          job_title: formData.job_title,
+          job_title: isApprentice ? 'stajyer' : formData.job_title,
           phone: formData.phone,
           whatsapp: formData.whatsapp
         });
@@ -1135,9 +1142,10 @@ const StaffModal = ({ staff, onClose, onSave }) => {
         // Create
         await axios.post(`${API}/auth/register`, {
           ...formData,
-          role: 'staff'
+          job_title: isApprentice ? 'stajyer' : formData.job_title,
+          role: formData.role
         });
-        toast.success(t('msg.staffCreated'));
+        toast.success(isApprentice ? 'Stajyer eklendi' : t('msg.staffCreated'));
       }
       onSave();
     } catch (error) {
