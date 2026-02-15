@@ -1,4 +1,4 @@
-// Türkçe ve İngilizce çeviri dosyası
+// Türkçe ve İngilizce çeviri dosyası - Güncellenmiş
 const translations = {
   tr: {
     translation: {
@@ -8,6 +8,8 @@ const translations = {
       "nav.admin": "Yönetim",
       "nav.settings": "Ayarlar",
       "nav.logout": "Çıkış",
+      "nav.profile": "Profil",
+      "nav.staff": "Personel",
       
       // Auth
       "auth.login": "Giriş Yap",
@@ -18,6 +20,22 @@ const translations = {
       "auth.branch": "Şube",
       "auth.loginTitle": "Garanti Kayıt Sistemi",
       "auth.loginSubtitle": "Renault Trucks",
+      
+      // Branches
+      "branch.1": "Bursa",
+      "branch.2": "İzmit",
+      "branch.3": "Orhanlı",
+      "branch.4": "Hadımköy",
+      "branch.5": "Keşan",
+      "branch.select": "Şube Seçin",
+      "branch.selectRequired": "Şube seçimi zorunludur",
+      
+      // Job Titles
+      "job.garanti_danisman": "Garanti Danışmanı",
+      "job.hasar_danisman": "Hasar Danışmanı",
+      "job.musteri_kabul": "Müşteri Kabul Personeli",
+      "job.select": "Görev Seçin",
+      "job.selectRequired": "Görev tanımı zorunludur",
       
       // Record Types
       "record.standard": "Standart",
@@ -37,6 +55,8 @@ const translations = {
       "field.note": "Not",
       "field.required": "Zorunlu",
       "field.optional": "Opsiyonel",
+      "field.phone": "Telefon",
+      "field.whatsapp": "WhatsApp",
       
       // Actions
       "action.save": "Kaydet",
@@ -52,6 +72,9 @@ const translations = {
       "action.search": "Ara",
       "action.filter": "Filtrele",
       "action.create": "Oluştur",
+      "action.edit": "Düzenle",
+      "action.addStaff": "Personel Ekle",
+      "action.chat": "Sohbet",
       
       // Status
       "status.online": "Çevrimiçi",
@@ -68,6 +91,7 @@ const translations = {
       "msg.fileUploaded": "Dosya yüklendi",
       "msg.fileDeleted": "Dosya silindi",
       "msg.recordDeleted": "Kayıt silindi",
+      "msg.recordUpdated": "Kayıt güncellendi",
       "msg.settingsSaved": "Ayarlar kaydedildi",
       "msg.loginSuccess": "Giriş başarılı",
       "msg.loginError": "Giriş başarısız",
@@ -75,14 +99,22 @@ const translations = {
       "msg.noPlateDetected": "Plaka algılanamadı",
       "msg.confirmDelete": "Silmek istediğinize emin misiniz?",
       "msg.offlineQueue": "Bağlantı kesik - Dosyalar kuyrukta",
+      "msg.staffCreated": "Personel oluşturuldu",
+      "msg.staffUpdated": "Personel güncellendi",
+      "msg.staffDeleted": "Personel silindi",
+      "msg.profileUpdated": "Profil güncellendi",
+      "msg.logoutSuccess": "Çıkış yapıldı",
       
       // Admin
       "admin.dashboard": "Dashboard",
       "admin.records": "Kayıtlar",
       "admin.settings": "Ayarlar",
+      "admin.staff": "Personel",
       "admin.totalRecords": "Toplam Kayıt",
       "admin.todayRecords": "Bugünkü Kayıt",
       "admin.recentRecords": "Son Kayıtlar",
+      "admin.branchOverview": "Şube Genel Durumu",
+      "admin.onlineStaff": "Çevrimiçi Personel",
       
       // Settings
       "settings.ocr": "OCR Ayarları",
@@ -113,7 +145,9 @@ const translations = {
       "misc.photo": "Fotoğraf",
       "misc.video": "Video",
       "misc.pdf": "PDF",
-      "misc.files": "Dosyalar"
+      "misc.files": "Dosyalar",
+      "misc.records": "Kayıt",
+      "misc.staff": "Personel"
     }
   },
   en: {
@@ -124,6 +158,8 @@ const translations = {
       "nav.admin": "Admin",
       "nav.settings": "Settings",
       "nav.logout": "Logout",
+      "nav.profile": "Profile",
+      "nav.staff": "Staff",
       
       // Auth
       "auth.login": "Login",
@@ -134,6 +170,22 @@ const translations = {
       "auth.branch": "Branch",
       "auth.loginTitle": "Warranty Record System",
       "auth.loginSubtitle": "Renault Trucks",
+      
+      // Branches
+      "branch.1": "Bursa",
+      "branch.2": "İzmit",
+      "branch.3": "Orhanlı",
+      "branch.4": "Hadımköy",
+      "branch.5": "Keşan",
+      "branch.select": "Select Branch",
+      "branch.selectRequired": "Branch selection is required",
+      
+      // Job Titles
+      "job.garanti_danisman": "Warranty Consultant",
+      "job.hasar_danisman": "Damage Consultant",
+      "job.musteri_kabul": "Customer Reception",
+      "job.select": "Select Job Title",
+      "job.selectRequired": "Job title is required",
       
       // Record Types
       "record.standard": "Standard",
@@ -153,6 +205,8 @@ const translations = {
       "field.note": "Note",
       "field.required": "Required",
       "field.optional": "Optional",
+      "field.phone": "Phone",
+      "field.whatsapp": "WhatsApp",
       
       // Actions
       "action.save": "Save",
@@ -168,6 +222,9 @@ const translations = {
       "action.search": "Search",
       "action.filter": "Filter",
       "action.create": "Create",
+      "action.edit": "Edit",
+      "action.addStaff": "Add Staff",
+      "action.chat": "Chat",
       
       // Status
       "status.online": "Online",
@@ -184,6 +241,7 @@ const translations = {
       "msg.fileUploaded": "File uploaded",
       "msg.fileDeleted": "File deleted",
       "msg.recordDeleted": "Record deleted",
+      "msg.recordUpdated": "Record updated",
       "msg.settingsSaved": "Settings saved",
       "msg.loginSuccess": "Login successful",
       "msg.loginError": "Login failed",
@@ -191,14 +249,22 @@ const translations = {
       "msg.noPlateDetected": "No plate detected",
       "msg.confirmDelete": "Are you sure you want to delete?",
       "msg.offlineQueue": "Offline - Files queued",
+      "msg.staffCreated": "Staff created",
+      "msg.staffUpdated": "Staff updated",
+      "msg.staffDeleted": "Staff deleted",
+      "msg.profileUpdated": "Profile updated",
+      "msg.logoutSuccess": "Logged out successfully",
       
       // Admin
       "admin.dashboard": "Dashboard",
       "admin.records": "Records",
       "admin.settings": "Settings",
+      "admin.staff": "Staff",
       "admin.totalRecords": "Total Records",
       "admin.todayRecords": "Today's Records",
       "admin.recentRecords": "Recent Records",
+      "admin.branchOverview": "Branch Overview",
+      "admin.onlineStaff": "Online Staff",
       
       // Settings
       "settings.ocr": "OCR Settings",
@@ -229,7 +295,9 @@ const translations = {
       "misc.photo": "Photo",
       "misc.video": "Video",
       "misc.pdf": "PDF",
-      "misc.files": "Files"
+      "misc.files": "Files",
+      "misc.records": "Records",
+      "misc.staff": "Staff"
     }
   }
 };
