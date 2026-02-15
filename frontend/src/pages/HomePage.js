@@ -5,9 +5,11 @@ import axios from 'axios';
 import { 
   Plus, Search, Filter, Truck, AlertTriangle, 
   Wrench, ClipboardCheck, ChevronRight, Loader2,
-  Image, Video, FileText
+  Image, Video, FileText, User, LogOut, Settings, Building2
 } from 'lucide-react';
 import { useOffline } from '../contexts/OfflineContext';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
