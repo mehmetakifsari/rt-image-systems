@@ -4,43 +4,57 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   ArrowLeft, Wrench, Truck, AlertTriangle, ClipboardCheck,
-  Loader2, ScanLine
+  Loader2, ScanLine, Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 import PlateOCRModal from '../components/PlateOCRModal';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const BRANCHES = [
+  { code: "1", name: "Bursa" },
+  { code: "2", name: "İzmit" },
+  { code: "3", name: "Orhanlı" },
+  { code: "4", name: "Hadımköy" },
+  { code: "5", name: "Keşan" }
+];
 
 const RECORD_TYPES = [
   {
     id: 'standard',
     icon: Wrench,
     color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    fields: { plate: true, workOrder: true, vin: false, referenceNo: false }
+    fields: { plate: true, workOrder: true, vin: false, referenceNo: false },
+    needsBranch: false // Şube iş emrinden çıkarılır
   },
   {
     id: 'roadassist',
     icon: Truck,
     color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    fields: { plate: true, workOrder: false, vin: false, referenceNo: false }
+    fields: { plate: true, workOrder: false, vin: false, referenceNo: false },
+    needsBranch: true
   },
   {
     id: 'damaged',
     icon: AlertTriangle,
     color: 'bg-red-900/20 text-red-400 border-red-500/30',
-    fields: { plate: false, workOrder: false, vin: false, referenceNo: true }
+    fields: { plate: false, workOrder: false, vin: false, referenceNo: true },
+    needsBranch: true
   },
   {
     id: 'pdi',
     icon: ClipboardCheck,
     color: 'bg-green-500/10 text-green-400 border-green-500/20',
-    fields: { plate: false, workOrder: false, vin: true, referenceNo: false }
+    fields: { plate: false, workOrder: false, vin: true, referenceNo: false },
+    needsBranch: true
   }
 ];
 
 const NewRecordPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user, selectedBranch, changeBranch } = useAuth();
   
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState(null);
@@ -49,18 +63,30 @@ const NewRecordPage = () => {
     workOrder: '',
     vin: '',
     referenceNo: '',
-    note: ''
+    note: '',
+    branchCode: selectedBranch || ''
   });
   const [loading, setLoading] = useState(false);
   const [showOCR, setShowOCR] = useState(false);
 
   const handleTypeSelect = (type) => {
     setSelectedType(type);
+    // Staff kullanıcı ise kendi şubesini kullan
+    if (user?.role === 'staff' && user?.branch_code) {
+      setFormData(prev => ({ ...prev, branchCode: user.branch_code }));
+    } else if (selectedBranch) {
+      setFormData(prev => ({ ...prev, branchCode: selectedBranch }));
+    }
     setStep(2);
   };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleBranchChange = (branchCode) => {
+    setFormData(prev => ({ ...prev, branchCode }));
+    changeBranch(branchCode);
   };
 
   const handlePlateDetected = (plate) => {
@@ -70,9 +96,9 @@ const NewRecordPage = () => {
   };
 
   const handleSubmit = async () => {
-    // Validate required fields
     const typeConfig = RECORD_TYPES.find(t => t.id === selectedType);
     
+    // Validate required fields
     if (typeConfig.fields.plate && !formData.plate) {
       toast.error(`${t('field.plate')} ${t('field.required')}`);
       return;
@@ -89,6 +115,11 @@ const NewRecordPage = () => {
       toast.error(`${t('field.referenceNo')} ${t('field.required')}`);
       return;
     }
+    // PDI, Hasarlı, Yol yardım için şube zorunlu
+    if (typeConfig.needsBranch && !formData.branchCode && user?.role !== 'staff') {
+      toast.error(t('branch.selectRequired'));
+      return;
+    }
 
     setLoading(true);
     try {
@@ -98,7 +129,8 @@ const NewRecordPage = () => {
         work_order: formData.workOrder || null,
         vin: formData.vin || null,
         reference_no: formData.referenceNo || null,
-        note_text: formData.note || null
+        note_text: formData.note || null,
+        branch_code: formData.branchCode || null
       });
       
       toast.success(t('msg.recordCreated'));
@@ -168,6 +200,37 @@ const NewRecordPage = () => {
         {/* Step 2: Form */}
         {step === 2 && selectedTypeConfig && (
           <div className="space-y-5">
+            {/* Branch selector for PDI, Damaged, RoadAssist */}
+            {selectedTypeConfig.needsBranch && user?.role !== 'staff' && (
+              <div>
+                <label className="flex items-center justify-between text-sm font-medium text-zinc-400 mb-2">
+                  <span className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    {t('branch.select')}
+                  </span>
+                  <span className="text-[#FACC15] text-xs">{t('field.required')}</span>
+                </label>
+                <select
+                  value={formData.branchCode}
+                  onChange={(e) => handleBranchChange(e.target.value)}
+                  className="w-full h-12 px-4 bg-[#18181b] border border-[#27272a] rounded-lg text-white"
+                  data-testid="branch-select"
+                >
+                  <option value="">{t('branch.select')}</option>
+                  {BRANCHES.map(branch => (
+                    <option key={branch.code} value={branch.code}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedBranch && (
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Son seçilen şube: {BRANCHES.find(b => b.code === selectedBranch)?.name}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Plate field */}
             {(selectedTypeConfig.fields.plate || selectedType === 'damaged') && (
               <div>
@@ -211,10 +274,13 @@ const NewRecordPage = () => {
                   type="text"
                   value={formData.workOrder}
                   onChange={(e) => handleInputChange('workOrder', e.target.value)}
-                  placeholder="WO-2024-001"
+                  placeholder="40216001"
                   className="w-full h-12 px-4 bg-[#18181b] border border-[#27272a] rounded-lg text-white placeholder-zinc-500"
                   data-testid="work-order-input"
                 />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Format: Şube(1) + Ay(2) + Gün(2) + Sıra(3) - Örnek: 40216001
+                </p>
               </div>
             )}
 
