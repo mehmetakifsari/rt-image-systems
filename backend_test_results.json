@@ -1,0 +1,26 @@
+{
+  "passed": [
+    "API Health Check",
+    "Admin Login",
+    "Get Current User",
+    "Create Standard Record",
+    "Create RoadAssist Record",
+    "Create Damaged Record",
+    "Create PDI Record",
+    "Get Records List",
+    "Get Single Record",
+    "Search Records",
+    "Update Record Note",
+    "File Upload",
+    "Get Dashboard Stats",
+    "Get Admin Settings",
+    "Update Admin Settings"
+  ],
+  "failed": [],
+  "summary": {
+    "total_tests": 15,
+    "passed_tests": 15,
+    "failed_tests": 0,
+    "success_rate": "100.0%"
+  }
+}
