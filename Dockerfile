@@ -27,6 +27,7 @@ ENV REACT_APP_GA_MEASUREMENT_ID=${REACT_APP_GA_MEASUREMENT_ID}
 # Build the frontend
 RUN yarn build
 
+
 # Stage 2: Production Image
 FROM python:3.11-slim-bullseye as production
 
@@ -35,19 +36,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 
-# Install system dependencies
-# - build deps: grpcio/cryptography/numpy/pandas gibi paketler source'a düşerse derlemek için
-# - nginx/supervisor: runtime
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     supervisor \
     curl \
     ca-certificates \
-    # build deps
+    # build deps (pip bazı paketlerde kaynak derlemeye düşerse)
     build-essential gcc g++ python3-dev \
     libffi-dev libssl-dev \
     libjpeg-dev zlib1g-dev \
-    # bazı durumlarda cryptography source build için gerekebilir
     rustc cargo \
     && rm -rf /var/lib/apt/lists/*
 
@@ -56,44 +54,60 @@ WORKDIR /app
 # Copy backend requirements and install
 COPY backend/requirements.txt ./backend/requirements.txt
 
-# Upgrade pip tooling + install deps (verbose build log for easier debug)
 RUN python -m pip install -U pip setuptools wheel \
     && pip install -r backend/requirements.txt -v
-
-# (Opsiyonel) build deps'i kaldırıp image'i küçültmek istersen aç:
-# RUN apt-get purge -y --auto-remove \
-#     build-essential gcc g++ python3-dev \
-#     libffi-dev libssl-dev libjpeg-dev zlib1g-dev \
-#     rustc cargo \
-#     && rm -rf /var/lib/apt/lists/*
 
 # Copy backend source
 COPY backend/ ./backend/
 
-# Copy built frontend from build stage
+# Copy built frontend
 COPY --from=build /app/frontend/build ./frontend/build
 
-# Create uploads directory
+# Uploads directory
 RUN mkdir -p /app/backend/uploads/standard \
     /app/backend/uploads/roadassist \
     /app/backend/uploads/damaged \
     /app/backend/uploads/pdi
 
-# Nginx configuration
+# Nginx config
 RUN rm -f /etc/nginx/sites-enabled/default
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Supervisor configuration
-# Not: Eğer bu dosya "program config" ise conf.d içine,
-# eğer "main supervisord.conf" ise /etc/supervisor/supervisord.conf içine koymalısın.
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# -----------------------------
+# Supervisor: "ana config" dosyasını biz yazıyoruz.
+# conf.d altına da app programlarını ayrı dosya olarak koyuyoruz.
+# Böylece "supervisord.conf" isim çakışmaları / yanlış kopyalama sorunları bitiyor.
+# -----------------------------
+
+# Ana supervisord config
+RUN printf '%s\n' \
+"[supervisord]" \
+"nodaemon=true" \
+"logfile=/var/log/supervisor/supervisord.log" \
+"pidfile=/var/run/supervisord.pid" \
+"childlogdir=/var/log/supervisor" \
+"" \
+"[unix_http_server]" \
+"file=/var/run/supervisor.sock" \
+"" \
+"[rpcinterface:supervisor]" \
+"supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface" \
+"" \
+"[supervisorctl]" \
+"serverurl=unix:///var/run/supervisor.sock" \
+"" \
+"[include]" \
+"files = /etc/supervisor/conf.d/*.conf" \
+> /etc/supervisor/supervisord.conf
+
+# Senin gönderdiğin supervisord.conf içeriği aslında "program config".
+# İsim çakışmasını önlemek için app.conf diye kopyalıyoruz:
+COPY supervisord.conf /etc/supervisor/conf.d/app.conf
 
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/api/ || exit 1
 
-# Start supervisor
-# Debian/Ubuntu'da genelde ana config /etc/supervisor/supervisord.conf olur.
-# Sen conf.d içine koyduğun için default ana config ile başlatmak daha sağlıklı:
+# Start supervisor (ana config ile)
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
