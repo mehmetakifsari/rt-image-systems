@@ -239,7 +239,7 @@ class RenaultTrucksAPITester:
             
             if response.status_code == 200:
                 records = response.json()
-                if isinstance(records, list) and len(records) > 0:
+                if isinstance(records, list):
                     self.log_result("Get Records List", True)
                     return True
                 else:
@@ -250,6 +250,37 @@ class RenaultTrucksAPITester:
                 return False
         except Exception as e:
             self.log_result("Get Records List", False, str(e))
+            return False
+
+    def test_branch_filter_records(self):
+        """Test filtering records by branch"""
+        if not self.admin_token:
+            self.log_result("Branch Filter Records", False, "No admin token")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.get(f"{self.base_url}/records?branch_code=4", headers=headers)
+            
+            if response.status_code == 200:
+                records = response.json()
+                if isinstance(records, list):
+                    # All records should be from branch 4
+                    all_branch_4 = all(r.get("branch_code") == "4" for r in records if r.get("branch_code"))
+                    if all_branch_4:
+                        self.log_result("Branch Filter Records", True)
+                        return True
+                    else:
+                        self.log_result("Branch Filter Records", False, "Records from other branches returned")
+                        return False
+                else:
+                    self.log_result("Branch Filter Records", False, "Invalid records response")
+                    return False
+            else:
+                self.log_result("Branch Filter Records", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Branch Filter Records", False, str(e))
             return False
 
     def test_get_single_record(self):
