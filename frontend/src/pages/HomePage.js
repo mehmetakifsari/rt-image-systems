@@ -5,11 +5,13 @@ import axios from 'axios';
 import { 
   Plus, Search, Filter, Truck, AlertTriangle, 
   Wrench, ClipboardCheck, ChevronRight, Loader2,
-  Image, Video, FileText, User, LogOut, Settings, Building2
+  Image, Video, FileText, User, LogOut, Settings, Building2, Moon, Sun
 } from 'lucide-react';
 import { useOffline } from '../contexts/OfflineContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'sonner';
+import { APP_VERSION } from '../config/version';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -32,6 +34,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { isOnline, pendingUploads, isSyncing } = useOffline();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,14 +103,22 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] pb-24">
+    <div className={`min-h-screen pb-24 transition-colors ${
+      theme === 'dark' ? 'bg-[#09090b]' : 'bg-gray-50'
+    }`}>
       {/* Header */}
-      <header className="glass-header sticky top-0 z-40 px-4 py-4">
+      <header className={`sticky top-0 z-40 px-4 py-4 backdrop-blur-xl border-b ${
+        theme === 'dark' 
+          ? 'bg-[#09090b]/90 border-[#27272a]' 
+          : 'bg-white/90 border-gray-200'
+      }`}>
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl font-bold text-white">RT KAYIT</h1>
-              <p className="text-xs text-zinc-500">
+              <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                RT KAYIT
+              </h1>
+              <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
                 {user?.branch_name ? `${user.branch_name} - ${user.job_title_display}` : 'Garanti Kayıt Sistemi'}
               </p>
             </div>
@@ -115,21 +126,40 @@ const HomePage = () => {
             <div className="flex items-center gap-2">
               {/* Online/Offline status */}
               <div className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${
-                isOnline ? 'online-indicator' : 'offline-indicator'
+                isOnline 
+                  ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
+                  : 'bg-red-500/10 text-red-500 border border-red-500/20'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
                 {isOnline ? t('status.online') : t('status.offline')}
                 {isSyncing && <Loader2 className="w-3 h-3 animate-spin" />}
               </div>
 
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                  theme === 'dark'
+                    ? 'bg-[#18181b] border border-[#27272a] text-zinc-400 hover:bg-[#27272a]'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                }`}
+                data-testid="home-theme-toggle"
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+
               {/* User menu */}
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="w-10 h-10 bg-[#18181b] border border-[#27272a] rounded-xl flex items-center justify-center hover:bg-[#27272a] transition-colors"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-[#18181b] border border-[#27272a] hover:bg-[#27272a]'
+                      : 'bg-white border border-gray-200 hover:bg-gray-100'
+                  }`}
                   data-testid="user-menu-button"
                 >
-                  <User className="w-5 h-5 text-zinc-400" />
+                  <User className={`w-5 h-5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`} />
                 </button>
 
                 {showUserMenu && (
@@ -138,13 +168,23 @@ const HomePage = () => {
                       className="fixed inset-0 z-40" 
                       onClick={() => setShowUserMenu(false)}
                     />
-                    <div className="absolute right-0 top-12 w-56 bg-[#18181b] border border-[#27272a] rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className={`absolute right-0 top-12 w-56 rounded-xl shadow-xl z-50 overflow-hidden border ${
+                      theme === 'dark'
+                        ? 'bg-[#18181b] border-[#27272a]'
+                        : 'bg-white border-gray-200'
+                    }`}>
                       {/* User info */}
-                      <div className="p-3 border-b border-[#27272a]">
-                        <p className="text-white font-medium truncate">{user?.full_name}</p>
-                        <p className="text-zinc-500 text-xs truncate">{user?.username}</p>
+                      <div className={`p-3 border-b ${theme === 'dark' ? 'border-[#27272a]' : 'border-gray-200'}`}>
+                        <p className={`font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {user?.full_name}
+                        </p>
+                        <p className={`text-xs truncate ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                          {user?.username}
+                        </p>
                         {user?.branch_name && (
-                          <p className="text-zinc-500 text-xs flex items-center gap-1 mt-1">
+                          <p className={`text-xs flex items-center gap-1 mt-1 ${
+                            theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                          }`}>
                             <Building2 className="w-3 h-3" />
                             {user.branch_name}
                           </p>
@@ -156,7 +196,11 @@ const HomePage = () => {
                         {user?.role === 'admin' && (
                           <button
                             onClick={() => { setShowUserMenu(false); navigate('/admin'); }}
-                            className="w-full flex items-center gap-3 px-3 py-2 text-zinc-300 hover:bg-[#27272a] rounded-lg transition-colors"
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                              theme === 'dark'
+                                ? 'text-zinc-300 hover:bg-[#27272a]'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
                             data-testid="admin-menu-item"
                           >
                             <Settings className="w-4 h-4" />
@@ -172,6 +216,13 @@ const HomePage = () => {
                           <span className="text-sm">{t('nav.logout')}</span>
                         </button>
                       </div>
+
+                      {/* Version */}
+                      <div className={`px-3 py-2 border-t ${theme === 'dark' ? 'border-[#27272a]' : 'border-gray-200'}`}>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}>
+                          v{APP_VERSION}
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}
@@ -181,13 +232,19 @@ const HomePage = () => {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${
+              theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'
+            }`} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={`${t('action.search')}...`}
-              className="w-full h-11 pl-10 pr-4 bg-[#18181b] border border-[#27272a] rounded-xl text-white placeholder-zinc-500"
+              className={`w-full h-11 pl-10 pr-4 rounded-xl border ${
+                theme === 'dark'
+                  ? 'bg-[#18181b] border-[#27272a] text-white placeholder-zinc-500'
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+              }`}
               data-testid="search-input"
             />
           </div>
@@ -199,7 +256,9 @@ const HomePage = () => {
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 filterType === '' 
                   ? 'bg-[#FACC15] text-black' 
-                  : 'bg-[#27272a] text-zinc-400 hover:text-white'
+                  : theme === 'dark'
+                    ? 'bg-[#27272a] text-zinc-400 hover:text-white'
+                    : 'bg-gray-200 text-gray-600 hover:text-gray-900'
               }`}
               data-testid="filter-all"
             >
@@ -212,7 +271,9 @@ const HomePage = () => {
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   filterType === type 
                     ? 'bg-[#FACC15] text-black' 
-                    : 'bg-[#27272a] text-zinc-400 hover:text-white'
+                    : theme === 'dark'
+                      ? 'bg-[#27272a] text-zinc-400 hover:text-white'
+                      : 'bg-gray-200 text-gray-600 hover:text-gray-900'
                 }`}
                 data-testid={`filter-${type}`}
               >
