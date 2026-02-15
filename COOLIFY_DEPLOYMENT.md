@@ -17,7 +17,7 @@ Coolify'da aşağıdaki ortam değişkenlerini ayarlayın:
 ```
 MONGO_URL=mongodb://mongodb:27017
 DB_NAME=renault_garanti
-REACT_APP_BACKEND_URL=https://your-domain.com
+REACT_APP_BACKEND_URL=https://claims.visupanel.com
 JWT_SECRET=your-super-secret-key-minimum-32-chars
 ```
 
@@ -29,7 +29,7 @@ LLM_API_KEY=            # Voice-to-Text için
 
 ### 4. Domain Ayarla
 - Settings > Domains
-- Domain'inizi ekleyin (örn: garanti.example.com)
+- Domain'inizi ekleyin: `claims.visupanel.com`
 - SSL otomatik yapılandırılacak
 
 ### 5. Deploy
@@ -77,7 +77,7 @@ Eğer docker-compose yerine sadece Dockerfile kullanmak isterseniz:
 
 Uygulama sağlık durumu:
 ```
-curl https://your-domain.com/api/
+curl https://claims.visupanel.com/api/
 ```
 
 Beklenen yanıt:

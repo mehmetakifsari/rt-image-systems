@@ -66,7 +66,7 @@ API endpoint'leri için `/api/` adresini ziyaret edin.
 
 Sağlık kontrolü:
 ```bash
-curl https://your-domain.com/api/
+curl https://claims.visupanel.com/api/
 ```
 
 ## Lisans
