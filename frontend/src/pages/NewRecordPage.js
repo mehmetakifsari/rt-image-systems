@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   ArrowLeft, Wrench, Truck, AlertTriangle, ClipboardCheck,
-  Loader2, ScanLine, Building2
+  Loader2, ScanLine, Building2, Mic, MicOff, Square
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import PlateOCRModal from '../components/PlateOCRModal';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
