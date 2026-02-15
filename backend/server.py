@@ -509,11 +509,14 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
         if extracted_branch:
             branch_code = extracted_branch
     
-    # Staff kullanıcılar sadece kendi şubelerine kayıt yapabilir
-    if current_user.get('role') == 'staff':
+    # Staff ve Apprentice kullanıcılar sadece kendi şubelerine kayıt yapabilir
+    if current_user.get('role') in ['staff', 'apprentice']:
         if branch_code and branch_code != current_user.get('branch_code'):
             raise HTTPException(status_code=403, detail="Sadece kendi şubenize kayıt yapabilirsiniz")
         branch_code = current_user.get('branch_code')
+    
+    # Stajyer oluşturduğunda pending_review olsun
+    initial_status = "pending_review" if current_user.get('role') == 'apprentice' else "active"
     
     now = datetime.now(timezone.utc).isoformat()
     vin_last5 = record.vin[-5:] if record.vin and len(record.vin) >= 5 else None
@@ -539,14 +542,39 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
         "note_text": record.note_text,
         "files_json": [],
         "user_id": current_user['id'],
+        "created_by_name": current_user.get('full_name'),
+        "created_by_role": current_user.get('role'),
         "branch_code": branch_code or "0",
         "branch_name": get_branch_name(branch_code) if branch_code else "Bilinmiyor",
         "created_at": now,
         "updated_at": now,
-        "status": "active"
+        "status": initial_status
     }
     await db.uploads.insert_one(record_doc)
     del record_doc['_id']
+    
+    # Stajyer kayıt oluşturduğunda danışmanlara bildirim gönder
+    if current_user.get('role') == 'apprentice':
+        staff_users = await db.users.find({
+            "role": "staff",
+            "branch_code": branch_code
+        }, {"_id": 0}).to_list(50)
+        
+        for staff in staff_users:
+            notification_doc = {
+                "id": str(uuid.uuid4()),
+                "record_id": record_doc['id'],
+                "sender_id": current_user['id'],
+                "sender_name": current_user.get('full_name', 'Stajyer'),
+                "recipient_id": staff['id'],
+                "recipient_name": staff.get('full_name', ''),
+                "notification_type": "new_record",
+                "message": f"{current_user.get('full_name', 'Stajyer')} yeni bir kayıt oluşturdu: {record_doc['case_key']}",
+                "is_read": False,
+                "created_at": now
+            }
+            await db.notifications.insert_one(notification_doc)
+    
     return RecordResponse(**record_doc)
 
 @api_router.get("/records", response_model=List[RecordResponse])
